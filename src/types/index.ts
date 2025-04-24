@@ -1,3 +1,4 @@
+
 export interface Campaign {
   id: string;
   name: string;
@@ -12,23 +13,7 @@ export interface Campaign {
   cpc: number;
   cpa: number;
   reach: number;
-}
-
-export interface ChartData {
-  date: string;
-  clicks: number;
-  impressions: number;
-  conversion_rate: number;
-  cpc: number;
-  cpm: number;
-  cpa: number;
-}
-
-export interface Action {
-  id: string;
-  title: string;
-  description: string;
-  priority: "high" | "medium" | "low";
-  timeEstimate: string;
-  impact: string;
+  startDate?: string;
+  endDate?: string;
+  campaignUrl?: string;
 }

@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Campaign } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { processSheetData } from '@/utils/sheetProcessing';
 
-// Dados mockados baseados na planilha real
+// Updated MOCK_SHEET_DATA to match the real Google Sheet structure
 const MOCK_SHEET_DATA = [
   {
     plataforma: "Google Ads",
@@ -16,6 +15,9 @@ const MOCK_SHEET_DATA = [
     alcance: 95000,
     "cliques no link": 7800,
     resultados: 342,
+    "data inicial": "01/01/2024",
+    "data final": "31/01/2024",
+    "link da campanha": "https://exemplo.com/campanha1"
   },
   {
     plataforma: "Meta Ads",
@@ -26,16 +28,9 @@ const MOCK_SHEET_DATA = [
     alcance: 72000,
     "cliques no link": 5200,
     resultados: 286,
-  },
-  {
-    plataforma: "Google Ads",
-    "nome da campanha": "Marca - Awareness",
-    status: "Ativo", 
-    "valor usado (brl)": 3850.90,
-    impressoes: 250000,
-    alcance: 180000,
-    "cliques no link": 9800,
-    resultados: 187,
+    "data inicial": "15/01/2024",
+    "data final": "14/02/2024",
+    "link da campanha": "https://exemplo.com/campanha2"
   }
 ];
 
