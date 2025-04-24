@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -6,6 +5,7 @@ import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { CampaignList } from "@/components/dashboard/CampaignList";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
 import { AnalysisSummary } from "@/components/dashboard/AnalysisSummary";
+import { GoogleSheetsConnect } from "@/components/dashboard/GoogleSheetsConnect";
 import { 
   DollarSign, 
   MousePointer,
@@ -15,17 +15,22 @@ import {
 import { mockChartData, mockStrengths, mockWeaknesses, mockActions, mockCampaigns } from "@/data/mockData";
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
 import { Campaign } from "@/types";
+import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 
 export default function Dashboard() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const { campaigns: googleSheetsCampaigns, isLoading } = useGoogleSheets();
+  
+  const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([]);
 
   useEffect(() => {
     const storedData = localStorage.getItem('campaignData');
     if (storedData) {
-      setCampaigns(JSON.parse(storedData));
+      setLocalCampaigns(JSON.parse(storedData));
     }
   }, []);
 
+  const campaigns = googleSheetsCampaigns || localCampaigns.length > 0 ? localCampaigns : mockCampaigns;
+  
   const {
     totalSpent,
     totalImpressions,
@@ -35,7 +40,7 @@ export default function Dashboard() {
     cpm,
     cpc,
     cpa
-  } = calculateMetrics(campaigns.length > 0 ? campaigns : mockCampaigns);
+  } = calculateMetrics(campaigns);
   
   return (
     <>
@@ -47,8 +52,16 @@ export default function Dashboard() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="text-muted-foreground">
-                Análise de {mockCampaigns.length} campanhas • Última atualização: {new Date().toLocaleDateString('pt-BR')}
+                Análise de {campaigns.length} campanhas • 
+                {isLoading ? 
+                  " Atualizando dados..." : 
+                  ` Última atualização: ${new Date().toLocaleDateString('pt-BR')}`
+                }
               </p>
+            </div>
+            
+            <div className="mt-4 md:mt-0 w-full md:w-auto">
+              <GoogleSheetsConnect />
             </div>
           </div>
 
@@ -133,7 +146,7 @@ export default function Dashboard() {
 
           {/* Campaign List */}
           <div className="mt-8">
-            <CampaignList campaigns={campaigns.length > 0 ? campaigns : mockCampaigns} />
+            <CampaignList campaigns={campaigns} />
           </div>
         </div>
       </main>
