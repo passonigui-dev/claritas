@@ -1,6 +1,5 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,7 +35,13 @@ serve(async (req) => {
     if (missingConfigs.length > 0) {
       const errorMessage = `Missing required configuration: ${missingConfigs.join(', ')}`
       console.error(errorMessage)
-      throw new Error(errorMessage)
+      return new Response(JSON.stringify({ 
+        error: errorMessage,
+        details: 'Please check your Supabase secrets configuration for Google Sheets API' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     console.log(`Fetching Google Sheets data with API key: ${GOOGLE_API_KEY.substring(0, 5)}...`)
@@ -52,7 +57,13 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.text()
       console.error('Google Sheets API error:', errorData)
-      throw new Error(`Google Sheets API error: ${errorData}`)
+      return new Response(JSON.stringify({ 
+        error: 'Google Sheets API request failed',
+        details: errorData 
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const data = await response.json()
@@ -62,10 +73,14 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Unexpected error:', error)
+    return new Response(JSON.stringify({ 
+      error: 'Unexpected error occurred',
+      details: error.message 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
+
