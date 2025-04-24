@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "lucide-react";
 import { processSheetData } from "@/utils/sheetProcessing";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SheetUploader() {
   const { toast } = useToast();
@@ -30,16 +31,35 @@ export function SheetUploader() {
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would fetch data from the Google Sheets API
-      // For now, we'll simulate the API call
-      const response = await fetch(`/api/sheets?url=${encodeURIComponent(sheetUrl)}`);
-      const data = await response.json();
+      // Extract the spreadsheet ID from the URL
+      const spreadsheetId = extractSpreadsheetId(sheetUrl);
       
-      // Process the sheet data
-      const processedData = processSheetData(data);
+      if (!spreadsheetId) {
+        throw new Error("Não foi possível extrair o ID da planilha da URL fornecida.");
+      }
       
-      // Store the processed data in localStorage for demo purposes
-      // In a real app, you might want to use a proper state management solution
+      // Call the Supabase Edge Function to fetch the Google Sheets data
+      const { data, error } = await supabase.functions.invoke('fetch-google-sheets', {
+        body: { 
+          action: 'fetch',
+          spreadsheetId: spreadsheetId 
+        }
+      });
+      
+      if (error) {
+        console.error("Erro ao chamar a Edge Function:", error);
+        throw error;
+      }
+      
+      if (!data || !data.rows || !Array.isArray(data.rows)) {
+        console.error("Formato de dados inválido:", data);
+        throw new Error("Formato de dados inválido recebido da API.");
+      }
+      
+      // Process the sheet data - skip header row
+      const processedData = processSheetData(data.rows.slice(1));
+      
+      // Store the processed data in localStorage
       localStorage.setItem('campaignData', JSON.stringify(processedData));
       
       toast({
@@ -49,6 +69,7 @@ export function SheetUploader() {
       
       navigate("/dashboard");
     } catch (error) {
+      console.error("Erro completo:", error);
       toast({
         title: "Erro ao importar planilha",
         description: "Ocorreu um erro ao processar os dados. Tente novamente.",
@@ -60,8 +81,14 @@ export function SheetUploader() {
   };
   
   const isValidGoogleSheetsUrl = (url: string): boolean => {
-    // Verificação básica para URL do Google Sheets - em produção seria mais completa
+    // Basic validation for Google Sheets URL
     return url.includes("docs.google.com/spreadsheets");
+  };
+  
+  const extractSpreadsheetId = (url: string): string | null => {
+    // Extract spreadsheet ID from Google Sheets URL
+    const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : null;
   };
 
   return (
@@ -96,7 +123,7 @@ export function SheetUploader() {
           <div className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-4">
             <Link className="h-3 w-3" />
             <a 
-              href="https://docs.google.com/spreadsheets/d/1example-template/copy" 
+              href="https://docs.google.com/spreadsheets/d/1UPGtJx3rYgq63Ew7-mFTLNHrGAX4sEOZ7YBttYsPPRU/copy" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-primary hover:underline"

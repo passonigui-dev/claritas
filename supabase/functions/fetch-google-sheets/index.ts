@@ -15,10 +15,19 @@ serve(async (req) => {
 
   try {
     const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY')
-    const SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
-    const SHEET_RANGE = Deno.env.get('SHEET_RANGE')
+    let SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
+    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A1:J1000'
+    
+    // Get request body
+    const requestData = await req.json()
+    
+    // If a spreadsheetId is provided in the request, use it instead of the env variable
+    if (requestData && requestData.spreadsheetId) {
+      SPREADSHEET_ID = requestData.spreadsheetId
+      console.log(`Using provided spreadsheet ID: ${SPREADSHEET_ID}`)
+    }
 
-    if (!GOOGLE_API_KEY || !SPREADSHEET_ID || !SHEET_RANGE) {
+    if (!GOOGLE_API_KEY || !SPREADSHEET_ID) {
       throw new Error('Missing required configuration')
     }
 
