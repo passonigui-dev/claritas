@@ -82,6 +82,8 @@ export function SheetUploader() {
           errorMessage = "Erro de configuração no servidor. Verifique se todas as chaves de API necessárias foram configuradas.";
         } else if (error.message.includes("API key not valid")) {
           errorMessage = "Chave de API do Google inválida. Por favor, verifique a configuração.";
+        } else if (error.message.includes("Unable to parse range")) {
+          errorMessage = "Erro na configuração do intervalo da planilha. Verifique se o nome da aba está correto.";
         }
       }
       
