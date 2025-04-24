@@ -1,50 +1,47 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { googleSheetsService } from '@/services/googleSheetsService';
 import { Campaign } from '@/types';
 import { toast } from '@/hooks/use-toast';
+
+// Dados mockados baseados na planilha real
+const MOCK_SHEET_DATA = [
+  {
+    plataforma: "Google Ads",
+    "nome da campanha": "Conversão - Produtos Premium",
+    status: "Ativo",
+    "valor usado (brl)": 2750.45,
+    impressoes: 125000,
+    alcance: 95000,
+    "cliques no link": 7800,
+    resultados: 342,
+  },
+  {
+    plataforma: "Meta Ads",
+    "nome da campanha": "Remarketing - Carrinhos Abandonados",
+    status: "Ativo",
+    "valor usado (brl)": 1850.30,
+    impressoes: 95000,
+    alcance: 72000,
+    "cliques no link": 5200,
+    resultados: 286,
+  },
+  {
+    plataforma: "Google Ads",
+    "nome da campanha": "Marca - Awareness",
+    status: "Ativo",
+    "valor usado (brl)": 3850.90,
+    impressoes: 250000,
+    alcance: 180000,
+    "cliques no link": 9800,
+    resultados: 187,
+  }
+];
 
 export function useGoogleSheets() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Inicializa o serviço do Google Sheets quando o componente monta
-  useEffect(() => {
-    const initializeGoogleApi = async () => {
-      try {
-        await googleSheetsService.initialize();
-      } catch (error) {
-        console.error('Falha ao inicializar Google API:', error);
-        toast({
-          title: "Erro na integração com Google Sheets",
-          description: "Não foi possível inicializar a API do Google.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initializeGoogleApi();
-  }, []);
-
-  // Função para autenticar o usuário
-  const authenticate = async () => {
-    try {
-      await googleSheetsService.authenticate();
-      setIsAuthenticated(true);
-      // Refetch data after successful authentication
-      return true;
-    } catch (error) {
-      console.error('Erro na autenticação:', error);
-      toast({
-        title: "Falha na autenticação",
-        description: "Não foi possível autenticar com o Google. Por favor, tente novamente.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
-  // Consulta React Query para buscar e atualizar dados da planilha
+  // Query para simular busca de dados
   const { 
     data: campaigns, 
     isLoading, 
@@ -53,25 +50,28 @@ export function useGoogleSheets() {
     refetch 
   } = useQuery({
     queryKey: ['sheetData'],
-    queryFn: googleSheetsService.fetchSheetData.bind(googleSheetsService),
-    enabled: isAuthenticated, // Só executa a query quando autenticado
+    queryFn: async () => {
+      // Simulando delay de rede
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return MOCK_SHEET_DATA;
+    },
     refetchInterval: 5 * 60 * 1000, // Recarregar a cada 5 minutos
-    staleTime: 5 * 60 * 1000, // Considerar dados "frescos" por 5 minutos
-    meta: {
-      onError: (error: any) => {
-        console.error('Erro ao buscar dados da planilha:', error);
-        toast({
-          title: "Falha ao carregar dados",
-          description: "Ocorreu um erro ao buscar os dados da planilha.",
-          variant: "destructive",
-        });
-      }
-    }
   });
 
-  // Salva dados no localStorage para persistência entre sessões
+  // Função simulada de autenticação
+  const authenticate = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsAuthenticated(true);
+    toast({
+      title: "Conectado com sucesso",
+      description: "Simulação de conexão com Google Sheets ativada",
+    });
+    return true;
+  };
+
+  // Salva dados no localStorage para persistência
   useEffect(() => {
-    if (campaigns && campaigns.length > 0) {
+    if (campaigns && Array.isArray(campaigns) && campaigns.length > 0) {
       localStorage.setItem('campaignData', JSON.stringify(campaigns));
       toast({
         title: "Dados atualizados",

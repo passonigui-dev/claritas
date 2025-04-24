@@ -1,4 +1,3 @@
-
 // Configurações para autenticação com Google API
 export const GOOGLE_API_CONFIG = {
   // Estas chaves são publicáveis e seguras para uso no frontend
@@ -10,7 +9,7 @@ export const GOOGLE_API_CONFIG = {
 
 // ID da planilha para leitura
 // Formato do URL: https://docs.google.com/spreadsheets/d/ID_DA_PLANILHA/edit
-export const SPREADSHEET_ID = '1example-template'; // Substitua pelo ID real da sua planilha
+export const SPREADSHEET_ID = '1UPGtJx3rYgq63Ew7-mFTLNHrGAX4sEOZ7YBttYsPPRU';
 
 // Nome da aba/range que contém os dados
-export const SHEET_RANGE = 'Campanhas!A1:J1000'; // Ajuste conforme a estrutura da sua planilha
+export const SHEET_RANGE = 'Campanhas!A2:J1000';
