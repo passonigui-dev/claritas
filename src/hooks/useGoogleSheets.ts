@@ -30,7 +30,7 @@ const MOCK_SHEET_DATA = [
   {
     plataforma: "Google Ads",
     "nome da campanha": "Marca - Awareness",
-    status: "Ativo",
+    status: "Ativo", 
     "valor usado (brl)": 3850.90,
     impressoes: 250000,
     alcance: 180000,
