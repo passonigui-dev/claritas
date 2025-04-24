@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "lucide-react";
+import { processSheetData } from "@/utils/sheetProcessing";
+import { useNavigate } from "react-router-dom";
 
 export function SheetUploader() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [sheetUrl, setSheetUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
@@ -26,17 +29,34 @@ export function SheetUploader() {
     
     setIsLoading(true);
     
-    // Simular processamento
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // In a real implementation, this would fetch data from the Google Sheets API
+      // For now, we'll simulate the API call
+      const response = await fetch(`/api/sheets?url=${encodeURIComponent(sheetUrl)}`);
+      const data = await response.json();
+      
+      // Process the sheet data
+      const processedData = processSheetData(data);
+      
+      // Store the processed data in localStorage for demo purposes
+      // In a real app, you might want to use a proper state management solution
+      localStorage.setItem('campaignData', JSON.stringify(processedData));
+      
       toast({
         title: "Planilha importada com sucesso!",
-        description: "Agora você será redirecionado para análise.",
+        description: "Redirecionando para o dashboard...",
       });
       
-      // Na versão final, esta seria uma navegação para a página de análise
-      window.location.href = "/dashboard";
-    }, 2000);
+      navigate("/dashboard");
+    } catch (error) {
+      toast({
+        title: "Erro ao importar planilha",
+        description: "Ocorreu um erro ao processar os dados. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const isValidGoogleSheetsUrl = (url: string): boolean => {

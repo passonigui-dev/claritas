@@ -1,3 +1,4 @@
+
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
@@ -10,10 +11,21 @@ import {
   BarChart,
   Users
 } from "lucide-react";
-import { mockCampaigns, mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
+import { mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
+import { useEffect, useState } from "react";
+import { Campaign } from "@/types";
 
 export default function Dashboard() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+
+  useEffect(() => {
+    const storedData = localStorage.getItem('campaignData');
+    if (storedData) {
+      setCampaigns(JSON.parse(storedData));
+    }
+  }, []);
+
   const {
     totalSpent,
     totalImpressions,
@@ -23,7 +35,7 @@ export default function Dashboard() {
     cpm,
     cpc,
     cpa
-  } = calculateMetrics(mockCampaigns);
+  } = calculateMetrics(campaigns.length > 0 ? campaigns : mockCampaigns);
   
   return (
     <>
