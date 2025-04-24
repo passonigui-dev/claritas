@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
@@ -13,7 +14,6 @@ import {
 } from "lucide-react";
 import { mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
-import { useEffect, useState } from "react";
 import { Campaign } from "@/types";
 
 export default function Dashboard() {
@@ -133,7 +133,7 @@ export default function Dashboard() {
 
           {/* Campaign List */}
           <div className="mt-8">
-            <CampaignList campaigns={mockCampaigns} />
+            <CampaignList campaigns={campaigns.length > 0 ? campaigns : mockCampaigns} />
           </div>
         </div>
       </main>

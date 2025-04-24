@@ -1,15 +1,5 @@
 
-interface RawSheetData {
-  dia: string;
-  plataforma: string;
-  "nome da campanha": string;
-  "valor usado (brl)": number;
-  impressoes: number;
-  alcance: number;
-  resultados: number;
-  "cliques no link": number;
-  status: string;
-}
+import { Campaign } from "@/types";
 
 export const processSheetData = (data: RawSheetData[]): Campaign[] => {
   const campaignMap = new Map<string, Campaign>();
@@ -47,3 +37,16 @@ export const processSheetData = (data: RawSheetData[]): Campaign[] => {
 
   return Array.from(campaignMap.values());
 };
+
+// Add the RawSheetData interface back since it was likely removed
+interface RawSheetData {
+  dia: string;
+  plataforma: string;
+  "nome da campanha": string;
+  "valor usado (brl)": number;
+  impressoes: number;
+  alcance: number;
+  resultados: number;
+  "cliques no link": number;
+  status: string;
+}
