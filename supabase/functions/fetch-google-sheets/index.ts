@@ -14,7 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY')
+    // Use the new KEY secret instead of GOOGLE_API_KEY
+    const GOOGLE_API_KEY = Deno.env.get('KEY')
     let SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
     const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A1:J1000'
     
@@ -31,6 +32,10 @@ serve(async (req) => {
       throw new Error('Missing required configuration')
     }
 
+    console.log(`Fetching Google Sheets data with API key: ${GOOGLE_API_KEY.substring(0, 5)}...`)
+    console.log(`Spreadsheet ID: ${SPREADSHEET_ID}`)
+    console.log(`Sheet range: ${SHEET_RANGE}`)
+
     // Fetch data from Google Sheets API
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_RANGE}?key=${GOOGLE_API_KEY}`,
@@ -44,6 +49,7 @@ serve(async (req) => {
     }
 
     const data = await response.json()
+    console.log('Successfully fetched sheet data')
     
     return new Response(JSON.stringify({ rows: data.values }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

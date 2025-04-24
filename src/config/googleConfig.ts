@@ -1,7 +1,8 @@
+
 // Configurações para autenticação com Google API
 export const GOOGLE_API_CONFIG = {
   // Estas chaves são publicáveis e seguras para uso no frontend
-  API_KEY: 'AIzaSyBNlYH01_9Hc5S1J9vuFmu2nUqBZJNAXxs', // Substitua pela sua API key
+  API_KEY: '', // A chave agora é gerenciada como um segredo no Supabase
   CLIENT_ID: '489099242050-qqc9tp9k3gmnmkdk770der4q8bt3lt8l.apps.googleusercontent.com', // Substitua pelo seu Client ID
   DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4',
   SCOPES: 'https://www.googleapis.com/auth/spreadsheets.readonly',
