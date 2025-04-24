@@ -9,15 +9,19 @@ import { Link } from "lucide-react";
 import { processSheetData } from "@/utils/sheetProcessing";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function SheetUploader() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [sheetUrl, setSheetUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     
     if (!isValidGoogleSheetsUrl(sheetUrl)) {
       toast({
@@ -59,9 +63,14 @@ export function SheetUploader() {
       }
       
       console.log("Dados recebidos com sucesso:", data.rows.length, "linhas");
+      console.log("Exemplo das primeiras linhas:", data.rows.slice(0, 2));
       
-      // Process the sheet data - skip header row if exists
-      const processedData = processSheetData(data.rows.slice(1));
+      // Process the sheet data
+      const processedData = processSheetData(data.rows);
+      
+      if (processedData.length === 0) {
+        throw new Error("Não foi possível processar os dados da planilha. Verifique o formato dos dados.");
+      }
       
       // Store the processed data in localStorage
       localStorage.setItem('campaignData', JSON.stringify(processedData));
@@ -86,6 +95,8 @@ export function SheetUploader() {
           errorMessage = "Erro na configuração do intervalo da planilha. Verifique se o nome da aba está correto.";
         }
       }
+      
+      setErrorMessage(errorMessage);
       
       toast({
         title: "Erro ao importar planilha",
@@ -117,6 +128,13 @@ export function SheetUploader() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro ao importar planilha</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="sheet-url">URL do Google Sheets</Label>

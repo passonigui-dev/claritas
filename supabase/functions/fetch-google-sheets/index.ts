@@ -16,7 +16,7 @@ serve(async (req) => {
     // Check for required environment variables
     const GOOGLE_API_KEY = Deno.env.get('KEY')
     let SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
-    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A2:J1000'
+    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'template!A2:T'
     
     // Get request body
     const requestData = await req.json()
@@ -83,4 +83,3 @@ serve(async (req) => {
     })
   }
 })
-
