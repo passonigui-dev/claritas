@@ -4,12 +4,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartData } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface PerformanceChartProps {
   data: ChartData[];
+  className?: string;
 }
 
-export function PerformanceChart({ data }: PerformanceChartProps) {
+export function PerformanceChart({ data, className }: PerformanceChartProps) {
   const [metric, setMetric] = useState("clicks");
   
   const formatValue = (value: number) => {
@@ -35,7 +37,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
   };
 
   return (
-    <Card className="col-span-full">
+    <Card className={cn("col-span-full", className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Desempenho ao longo do tempo</CardTitle>
         <Select value={metric} onValueChange={setMetric}>
