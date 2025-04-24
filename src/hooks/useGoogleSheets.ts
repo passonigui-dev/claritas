@@ -20,6 +20,7 @@ export function useGoogleSheets() {
     queryKey: ['sheetData'],
     queryFn: async () => {
       try {
+        console.log('Fetching Google Sheets data...');
         const { data, error } = await supabase.functions.invoke('fetch-google-sheets', {
           body: { action: 'fetch' }
         });
@@ -36,8 +37,14 @@ export function useGoogleSheets() {
           throw new Error('Invalid data format received');
         }
 
+        console.log('Received data from Google Sheets:', data.rows.length, 'rows');
         setUseMockData(false);
-        const processedData = processSheetData(data.rows.slice(1)); // Skip header row
+        const processedData = processSheetData(data.rows);
+        console.log('Processed campaign data:', processedData);
+        
+        // Store in localStorage for offline access
+        localStorage.setItem('campaignData', JSON.stringify(data.rows));
+        
         return processedData;
       } catch (error) {
         console.error('Error fetching Google Sheets data:', error);
@@ -46,7 +53,7 @@ export function useGoogleSheets() {
       }
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    retry: 1, // Only retry once to avoid too many failed requests
+    retry: 1,
   });
 
   // Save data to localStorage for persistence

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -20,8 +19,7 @@ import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { processSheetData } from "@/utils/sheetProcessing";
 
 export default function Dashboard() {
-  const { campaigns: googleSheetsCampaigns, isLoading } = useGoogleSheets();
-  
+  const { campaigns: googleSheetsCampaigns, isLoading, useMockData } = useGoogleSheets();
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([]);
 
   useEffect(() => {
@@ -29,17 +27,29 @@ export default function Dashboard() {
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
-        // Process the stored data to ensure it matches the Campaign type
         const processedCampaigns = processSheetData(parsedData);
         setLocalCampaigns(processedCampaigns);
+        console.log('Loaded campaigns from localStorage:', processedCampaigns);
       } catch (error) {
         console.error("Error processing stored campaign data:", error);
       }
     }
   }, []);
 
-  const campaigns = googleSheetsCampaigns || localCampaigns.length > 0 ? localCampaigns : mockCampaigns;
-  
+  // Determine which campaigns data to use
+  const campaigns = googleSheetsCampaigns && googleSheetsCampaigns.length > 0 
+    ? googleSheetsCampaigns 
+    : localCampaigns.length > 0 
+      ? localCampaigns 
+      : mockCampaigns;
+
+  console.log('Current data source:', {
+    hasGoogleSheets: Boolean(googleSheetsCampaigns?.length),
+    hasLocalStorage: Boolean(localCampaigns.length),
+    usingMockData: campaigns === mockCampaigns,
+    totalCampaigns: campaigns.length
+  });
+
   const {
     totalSpent,
     totalImpressions,
@@ -50,7 +60,7 @@ export default function Dashboard() {
     cpc,
     cpa
   } = calculateMetrics(campaigns);
-  
+
   return (
     <>
       <Navbar />
