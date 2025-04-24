@@ -1,7 +1,7 @@
 
 import { Campaign } from "@/types";
 
-interface RawSheetData {
+export interface RawSheetData {
   plataforma: string;
   "nome da campanha": string;
   "valor usado (brl)": number;

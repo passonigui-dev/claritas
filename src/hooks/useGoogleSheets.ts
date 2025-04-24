@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Campaign } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { processSheetData } from '@/utils/sheetProcessing';
+import { processSheetData, RawSheetData } from '@/utils/sheetProcessing';
 import { fetchSheetData } from '@/services/supabaseService';
 
-// Updated MOCK_SHEET_DATA to match the real Google Sheet structure
-const MOCK_SHEET_DATA = [
+const MOCK_SHEET_DATA: RawSheetData[] = [
   {
     plataforma: "Google Ads",
     "nome da campanha": "Conversão - Produtos Premium",
@@ -40,9 +38,8 @@ export function useGoogleSheets() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [useMockData, setUseMockData] = useState(true);
   
-  // Query for fetching data
   const { 
-    data: rawData, 
+    data: campaigns,
     isLoading, 
     isError, 
     error, 
@@ -51,27 +48,21 @@ export function useGoogleSheets() {
     queryKey: ['sheetData'],
     queryFn: async () => {
       if (useMockData) {
-        // Use mock data for demo mode
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return MOCK_SHEET_DATA;
+        return processSheetData(MOCK_SHEET_DATA);
       } else {
-        // Use real data from Supabase/Google Sheets
         try {
           const data = await fetchSheetData();
           return data;
         } catch (error) {
           console.error('Error fetching Google Sheets data:', error);
-          // Fallback to mock data if real data fetch fails
           setUseMockData(true);
-          return MOCK_SHEET_DATA;
+          return processSheetData(MOCK_SHEET_DATA);
         }
       }
     },
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
   });
-
-  // Process raw data into Campaign format
-  const campaigns = rawData ? (Array.isArray(rawData) ? processSheetData(rawData) : rawData) : undefined;
 
   // Simulated authentication function
   const authenticate = async () => {
@@ -100,14 +91,14 @@ export function useGoogleSheets() {
 
   // Save data to localStorage for persistence
   useEffect(() => {
-    if (rawData && Array.isArray(rawData) && rawData.length > 0) {
-      localStorage.setItem('campaignData', JSON.stringify(rawData));
+    if (campaigns && Array.isArray(campaigns) && campaigns.length > 0) {
+      localStorage.setItem('campaignData', JSON.stringify(campaigns));
       toast({
         title: "Dados atualizados",
         description: "Dashboard atualizado com os dados mais recentes da planilha.",
       });
     }
-  }, [rawData]);
+  }, [campaigns]);
 
   return {
     campaigns,
