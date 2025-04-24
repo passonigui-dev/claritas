@@ -65,15 +65,47 @@ export function SheetUploader() {
       console.log("Dados recebidos com sucesso:", data.rows.length, "linhas");
       console.log("Exemplo das primeiras linhas:", data.rows.slice(0, 2));
       
+      // Check if we have headers
+      if (data.rows.length === 0) {
+        throw new Error("A planilha está vazia. Verifique se há dados na planilha.");
+      }
+      
+      // Validate header row
+      const headers = data.rows[0];
+      if (!headers || !Array.isArray(headers) || headers.length === 0) {
+        throw new Error("Cabeçalhos inválidos na planilha. Verifique o formato dos dados.");
+      }
+      
       // Process the sheet data
       const processedData = processSheetData(data.rows);
       
       if (processedData.length === 0) {
-        throw new Error("Não foi possível processar os dados da planilha. Verifique o formato dos dados.");
+        throw new Error("Não foi possível processar os dados da planilha. Verifique o formato e os cabeçalhos.");
       }
       
       // Store the processed data in localStorage
       localStorage.setItem('campaignData', JSON.stringify(processedData));
+      
+      // Store raw data for AI processing
+      if (data.rows.length > 1) {
+        try {
+          const headers = data.rows[0].map((h: any) => h?.toString().toLowerCase().trim() || "");
+          const rawDataArray = data.rows.slice(1).map((row: any[]) => {
+            const obj: Record<string, any> = {};
+            headers.forEach((header: string, index: number) => {
+              if (header) {
+                obj[header] = row[index];
+              }
+            });
+            return obj;
+          });
+          
+          localStorage.setItem('campaignRawData', JSON.stringify(rawDataArray));
+          console.log("Raw data stored for AI processing:", rawDataArray.length, "rows");
+        } catch (e) {
+          console.warn("Failed to store raw data, but continuing with processed data:", e);
+        }
+      }
       
       toast({
         title: "Planilha importada com sucesso!",
@@ -93,6 +125,9 @@ export function SheetUploader() {
           errorMessage = "Chave de API do Google inválida. Por favor, verifique a configuração.";
         } else if (error.message.includes("Unable to parse range")) {
           errorMessage = "Erro na configuração do intervalo da planilha. Verifique se o nome da aba está correto.";
+        } else {
+          // Use the specific error message if available
+          errorMessage = error.message;
         }
       }
       
