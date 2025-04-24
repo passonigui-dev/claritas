@@ -28,52 +28,69 @@ export const processSheetData = (rows: any[]): Campaign[] => {
     return [];
   }
 
-  // Use first row as headers but make them safer with null checks
-  const headers = rows[0].map((header: any) => {
-    // Ensure header is a string before calling toLowerCase
-    return header ? header.toString().toLowerCase().trim() : "";
-  });
+  // O problema estava aqui: a primeira linha não são os cabeçalhos, mas dados
+  // Vamos verificar se o primeiro item é uma data (2025-04-23) e não um cabeçalho
+  const firstRowIsData = rows[0][0] && (
+    rows[0][0].toString().match(/^\d{4}-\d{2}-\d{2}$/) || 
+    rows[0][0].toString().match(/^\d{2}\/\d{2}\/\d{4}$/)
+  );
   
-  console.log("Processing with headers:", headers);
-
-  // Check if we have valid headers
+  // Se a primeira linha parece ser dados e não cabeçalhos,
+  // vamos criar cabeçalhos padrão baseados na especificação fornecida
+  const headers = firstRowIsData ? 
+    ["dia", "objetivo", "plataforma", "nome_campanha", "nome_conjunto", 
+     "nome_anuncio", "orcamento_campanha", "tipo_orcamento_campanha", 
+     "orcamento_conjunto", "tipo_orcamento_conjunto", "valor_usado_brl", 
+     "impressoes", "alcance", "tipo_resultado", "resultados", "status", 
+     "nivel", "cliques_link", "data_inicial", "data_final"] :
+    rows[0].map((header: any) => header ? header.toString().toLowerCase().trim() : "");
+  
+  console.log("Headers identificados:", headers);
+  console.log("Primeira linha de dados:", rows[firstRowIsData ? 0 : 1]);
+  
+  // Verificamos se temos cabeçalhos válidos
   if (headers.filter(Boolean).length === 0) {
-    console.error("No valid headers found in the first row");
-    return [];
+    console.error("No valid headers found in the data");
+    throw new Error("Não foi possível identificar cabeçalhos válidos na planilha.");
   }
 
+  // Determinamos a linha inicial para os dados
+  const dataStartIndex = firstRowIsData ? 0 : 1;
+  
   // Map data rows to objects using headers
-  const processedData = rows.slice(1).map(row => {
+  const processedData = rows.slice(dataStartIndex).map(row => {
     const rowData: Record<string, any> = {};
     headers.forEach((header: string, index: number) => {
-      // Only process if header exists and is not empty
-      if (header && row[index] !== undefined) {
+      // Só processa se o cabeçalho existir e não estiver vazio
+      if (header && index < row.length) {
         const value = row[index];
-        // Convert numeric values
+        // Converte valores numéricos
         if (['valor_usado_brl', 'orcamento_campanha', 'orcamento_conjunto', 
              'impressoes', 'alcance', 'resultados', 'cliques_link'].includes(header)) {
           rowData[header] = normalizeNumber(value);
         } else if (['data_inicial', 'data_final', 'dia'].includes(header)) {
-          rowData[header] = normalizeDate(value);
+          rowData[header] = normalizeDate(value !== undefined && value !== null ? value.toString() : '');
         } else {
-          rowData[header] = value?.toString() || '';
+          rowData[header] = value !== undefined && value !== null ? value.toString() : '';
         }
       }
     });
     return rowData as RawCampaignData;
   });
 
-  // Transform the processed data into Campaign objects
+  console.log("Dados processados (primeiros 2):", processedData.slice(0, 2));
+
+  // Transforma os dados processados em objetos Campaign
   return processedData
-    .filter(row => row.nome_campanha && row.plataforma) // Ensure required fields exist
+    .filter(row => row.nome_campanha && row.plataforma) // Garante que campos obrigatórios existam
     .map((row: RawCampaignData, index: number): Campaign => {
-      // Generate a unique ID using multiple fields
+      // Gera um ID único usando múltiplos campos
       const campaignId = `${row.plataforma || 'unknown'}-${row.nome_campanha || 'unnamed'}-${index}`.toLowerCase().replace(/\s+/g, '-');
       
-      // Determine platform type with safe fallback
+      // Determina o tipo de plataforma com fallback seguro
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
       
-      // Determine status with safe fallback
+      // Determina o status com fallback seguro
       const normalizedStatus = (row.status || '').toLowerCase();
       const status = normalizedStatus.includes("ativ") ? "active" : "paused";
 

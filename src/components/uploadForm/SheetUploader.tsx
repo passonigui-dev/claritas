@@ -65,35 +65,45 @@ export function SheetUploader() {
       console.log("Dados recebidos com sucesso:", data.rows.length, "linhas");
       console.log("Exemplo das primeiras linhas:", data.rows.slice(0, 2));
       
-      // Check if we have headers
+      // Check if we have any data
       if (data.rows.length === 0) {
         throw new Error("A planilha está vazia. Verifique se há dados na planilha.");
       }
       
-      // Validate header row
-      const headers = data.rows[0];
-      if (!headers || !Array.isArray(headers) || headers.length === 0) {
-        throw new Error("Cabeçalhos inválidos na planilha. Verifique o formato dos dados.");
-      }
-      
-      // Process the sheet data
-      const processedData = processSheetData(data.rows);
-      
-      if (processedData.length === 0) {
-        throw new Error("Não foi possível processar os dados da planilha. Verifique o formato e os cabeçalhos.");
-      }
-      
-      // Store the processed data in localStorage
-      localStorage.setItem('campaignData', JSON.stringify(processedData));
-      
-      // Store raw data for AI processing
-      if (data.rows.length > 1) {
+      try {
+        // Process the sheet data
+        const processedData = processSheetData(data.rows);
+        
+        if (processedData.length === 0) {
+          throw new Error("Não foi possível processar os dados da planilha. Verifique se há pelo menos uma campanha válida.");
+        }
+        
+        // Store the processed data in localStorage
+        localStorage.setItem('campaignData', JSON.stringify(processedData));
+        
+        // Store raw data for AI processing
         try {
-          const headers = data.rows[0].map((h: any) => h?.toString().toLowerCase().trim() || "");
-          const rawDataArray = data.rows.slice(1).map((row: any[]) => {
+          // Determinamos se a primeira linha são os cabeçalhos ou já são dados
+          const firstRowIsData = data.rows[0][0] && (
+            data.rows[0][0].toString().match(/^\d{4}-\d{2}-\d{2}$/) || 
+            data.rows[0][0].toString().match(/^\d{2}\/\d{2}\/\d{4}$/)
+          );
+          
+          // Se a primeira linha parecer dados e não cabeçalhos, usamos cabeçalhos padrão
+          const headers = firstRowIsData ? 
+            ["dia", "objetivo", "plataforma", "nome_campanha", "nome_conjunto", 
+             "nome_anuncio", "orcamento_campanha", "tipo_orcamento_campanha", 
+             "orcamento_conjunto", "tipo_orcamento_conjunto", "valor_usado_brl", 
+             "impressoes", "alcance", "tipo_resultado", "resultados", "status", 
+             "nivel", "cliques_link", "data_inicial", "data_final"] :
+            data.rows[0].map((h: any) => h?.toString().toLowerCase().trim() || "");
+          
+          const dataStartIndex = firstRowIsData ? 0 : 1;
+          
+          const rawDataArray = data.rows.slice(dataStartIndex).map((row: any[]) => {
             const obj: Record<string, any> = {};
             headers.forEach((header: string, index: number) => {
-              if (header) {
+              if (header && index < row.length) {
                 obj[header] = row[index];
               }
             });
@@ -105,14 +115,17 @@ export function SheetUploader() {
         } catch (e) {
           console.warn("Failed to store raw data, but continuing with processed data:", e);
         }
+        
+        toast({
+          title: "Planilha importada com sucesso!",
+          description: "Redirecionando para o dashboard...",
+        });
+        
+        navigate("/dashboard");
+      } catch (processError) {
+        console.error("Erro ao processar os dados da planilha:", processError);
+        throw new Error("Não foi possível processar os dados da planilha. Verifique o formato e os cabeçalhos.");
       }
-      
-      toast({
-        title: "Planilha importada com sucesso!",
-        description: "Redirecionando para o dashboard...",
-      });
-      
-      navigate("/dashboard");
     } catch (error: any) {
       console.error("Erro completo:", error);
       
