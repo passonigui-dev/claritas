@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export function useGoogleSheets() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [useMockData, setUseMockData] = useState(false);
   
   const { 
     data: campaigns,
@@ -23,16 +24,29 @@ export function useGoogleSheets() {
           body: { action: 'fetch' }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error from edge function:', error);
+          setUseMockData(true);
+          throw error;
+        }
 
+        if (!data || !data.rows || !Array.isArray(data.rows)) {
+          console.error('Invalid data format from edge function:', data);
+          setUseMockData(true);
+          throw new Error('Invalid data format received');
+        }
+
+        setUseMockData(false);
         const processedData = processSheetData(data.rows.slice(1)); // Skip header row
         return processedData;
       } catch (error) {
         console.error('Error fetching Google Sheets data:', error);
+        setUseMockData(true);
         throw error;
       }
     },
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 1, // Only retry once to avoid too many failed requests
   });
 
   // Save data to localStorage for persistence
@@ -50,8 +64,13 @@ export function useGoogleSheets() {
   // since we're using the Edge Function with the API key
   const authenticate = async () => {
     setIsAuthenticated(true);
-    await refetch();
-    return true;
+    try {
+      await refetch();
+      return true;
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      return false;
+    }
   };
 
   return {
@@ -61,6 +80,7 @@ export function useGoogleSheets() {
     error,
     isAuthenticated,
     authenticate,
-    refetch
+    refetch,
+    useMockData
   };
 }
