@@ -1,4 +1,3 @@
-
 export interface Campaign {
   id: string;
   name: string;
@@ -37,7 +36,29 @@ export interface Action {
   impact: string;
 }
 
-// Supabase types for Google Sheets integration
+export interface RawCampaignData {
+  dia: string;
+  objetivo: string;
+  plataforma: string;
+  nome_campanha: string;
+  nome_conjunto: string;
+  nome_anuncio: string;
+  orcamento_campanha: number;
+  tipo_orcamento_campanha: string;
+  orcamento_conjunto: number;
+  tipo_orcamento_conjunto: string;
+  valor_usado_brl: number;
+  impressoes: number;
+  alcance: number;
+  tipo_resultado: string;
+  resultados: number;
+  status: string;
+  nivel: string;
+  cliques_link: number;
+  data_inicial: string;
+  data_final: string;
+}
+
 export interface GoogleSheetsCredentials {
   api_key: string;
   client_id: string;

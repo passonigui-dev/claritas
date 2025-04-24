@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Campaign } from '@/types';
+import { Campaign, RawCampaignData } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { processSheetData } from '@/utils/sheetProcessing';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 export function useGoogleSheets() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [useMockData, setUseMockData] = useState(false);
+  const [rawData, setRawData] = useState<RawCampaignData[]>([]);
   
   const { 
     data: campaigns,
@@ -38,12 +39,26 @@ export function useGoogleSheets() {
         }
 
         console.log('Received data from Google Sheets:', data.rows.length, 'rows');
+        
+        // Store raw data for future AI processing
+        if (data.rows.length > 1) {
+          const headers = data.rows[0];
+          const rawDataArray = data.rows.slice(1).map((row: any[]) => {
+            const obj: Record<string, any> = {};
+            headers.forEach((header: string, index: number) => {
+              const key = header.toLowerCase().trim();
+              obj[key] = row[index];
+            });
+            return obj;
+          });
+          setRawData(rawDataArray as RawCampaignData[]);
+          // Store complete data in localStorage
+          localStorage.setItem('campaignRawData', JSON.stringify(rawDataArray));
+        }
+
         setUseMockData(false);
         const processedData = processSheetData(data.rows);
         console.log('Processed campaign data:', processedData);
-        
-        // Store in localStorage for offline access
-        localStorage.setItem('campaignData', JSON.stringify(data.rows));
         
         return processedData;
       } catch (error) {
@@ -67,8 +82,6 @@ export function useGoogleSheets() {
     }
   }, [campaigns]);
 
-  // Simulated authentication function - in this case, we're always authenticated
-  // since we're using the Edge Function with the API key
   const authenticate = async () => {
     setIsAuthenticated(true);
     try {
@@ -82,6 +95,7 @@ export function useGoogleSheets() {
 
   return {
     campaigns,
+    rawData, // Now exposing raw data for AI processing
     isLoading,
     isError,
     error,
