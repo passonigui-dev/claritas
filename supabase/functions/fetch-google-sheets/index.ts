@@ -16,7 +16,7 @@ serve(async (req) => {
     // Check for required environment variables
     const GOOGLE_API_KEY = Deno.env.get('KEY')
     let SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
-    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'template!A2:T'
+    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A1:Z1000'
     
     // Get request body
     const requestData = await req.json()
@@ -67,7 +67,23 @@ serve(async (req) => {
     }
 
     const data = await response.json()
-    console.log('Successfully fetched sheet data')
+    
+    // Validate the response data structure
+    if (!data || !data.values || !Array.isArray(data.values)) {
+      console.error('Invalid data format received from Google Sheets:', data)
+      return new Response(JSON.stringify({
+        error: 'Invalid data format received from Google Sheets',
+        details: 'The API response did not contain the expected data structure'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    console.log('Successfully fetched sheet data:', {
+      rowCount: data.values.length,
+      columnCount: data.values[0]?.length || 0
+    })
     
     return new Response(JSON.stringify({ rows: data.values }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
