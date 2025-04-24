@@ -1,4 +1,3 @@
-
 export interface Campaign {
   id: string;
   name: string;
@@ -12,6 +11,7 @@ export interface Campaign {
   ctr: number;
   cpc: number;
   cpa: number;
+  reach: number;
 }
 
 export interface ChartData {

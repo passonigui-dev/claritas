@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
@@ -6,19 +5,25 @@ import { CampaignList } from "@/components/dashboard/CampaignList";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
 import { AnalysisSummary } from "@/components/dashboard/AnalysisSummary";
 import { 
-  LineChart, 
   DollarSign, 
-  MousePointer, 
-  BarChart 
+  MousePointer,
+  BarChart,
+  Users
 } from "lucide-react";
 import { mockCampaigns, mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
+import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
 
 export default function Dashboard() {
-  // Na implementação real, estes dados viriam da análise da IA
-  const totalSpent = mockCampaigns.reduce((sum, campaign) => sum + campaign.spent, 0);
-  const totalClicks = mockCampaigns.reduce((sum, campaign) => sum + campaign.clicks, 0);
-  const totalConversions = mockCampaigns.reduce((sum, campaign) => sum + campaign.conversions, 0);
-  const avgCtr = mockCampaigns.reduce((sum, campaign) => sum + campaign.ctr, 0) / mockCampaigns.length;
+  const {
+    totalSpent,
+    totalImpressions,
+    totalClicks,
+    totalConversions,
+    totalReach,
+    cpm,
+    cpc,
+    cpa
+  } = calculateMetrics(mockCampaigns);
   
   return (
     <>
@@ -30,7 +35,7 @@ export default function Dashboard() {
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="text-muted-foreground">
-                Análise de {mockCampaigns.length} campanhas • Última atualização: {new Date().toLocaleDateString()}
+                Análise de {mockCampaigns.length} campanhas • Última atualização: {new Date().toLocaleDateString('pt-BR')}
               </p>
             </div>
           </div>
@@ -39,35 +44,59 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <KpiCard
               title="Total Investido"
-              value={`R$ ${totalSpent.toFixed(2)}`}
+              value={formatCurrency(totalSpent)}
               description="Soma do investimento em todas as campanhas"
               icon={DollarSign}
-              trend="up"
-              trendValue="12% vs. período anterior"
+              trend="neutral"
+              trendValue="Período atual"
             />
             <KpiCard
-              title="Cliques Totais"
-              value={totalClicks.toLocaleString()}
-              description="Total de cliques em todas as campanhas"
+              title="CPM"
+              value={formatCurrency(cpm)}
+              description="Custo por mil impressões"
+              icon={Users}
+              trend="neutral"
+              trendValue="Média geral"
+            />
+            <KpiCard
+              title="CPC"
+              value={formatCurrency(cpc)}
+              description="Custo médio por clique"
               icon={MousePointer}
-              trend="up"
-              trendValue="8% vs. período anterior"
+              trend="neutral"
+              trendValue="Média geral"
             />
             <KpiCard
-              title="Conversões"
-              value={totalConversions.toLocaleString()}
-              description="Total de conversões atribuídas"
+              title="CPA"
+              value={formatCurrency(cpa)}
+              description="Custo por aquisição médio"
               icon={BarChart}
-              trend="up"
-              trendValue="15% vs. período anterior"
+              trend="neutral"
+              trendValue="Média geral"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <KpiCard
+              title="Alcance Total"
+              value={formatMetric(totalReach)}
+              description="Usuários únicos alcançados"
+              icon={Users}
+              className="md:col-span-1"
             />
             <KpiCard
-              title="CTR Médio"
-              value={`${avgCtr.toFixed(2)}%`}
-              description="Taxa média de clique em todas as campanhas"
-              icon={LineChart}
-              trend="up"
-              trendValue="5% vs. período anterior"
+              title="Impressões"
+              value={formatMetric(totalImpressions)}
+              description="Total de vezes que os anúncios foram exibidos"
+              icon={Users}
+              className="md:col-span-1"
+            />
+            <KpiCard
+              title="Cliques"
+              value={formatMetric(totalClicks)}
+              description="Total de cliques em links"
+              icon={MousePointer}
+              className="md:col-span-1"
             />
           </div>
 
