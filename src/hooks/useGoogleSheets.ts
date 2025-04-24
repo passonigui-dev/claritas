@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Campaign } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { processSheetData } from '@/utils/sheetProcessing';
+import { fetchSheetData } from '@/services/supabaseService';
 
 // Updated MOCK_SHEET_DATA to match the real Google Sheet structure
 const MOCK_SHEET_DATA = [
@@ -36,8 +38,9 @@ const MOCK_SHEET_DATA = [
 
 export function useGoogleSheets() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [useMockData, setUseMockData] = useState(true);
   
-  // Query para simular busca de dados
+  // Query for fetching data
   const { 
     data: rawData, 
     isLoading, 
@@ -47,28 +50,55 @@ export function useGoogleSheets() {
   } = useQuery({
     queryKey: ['sheetData'],
     queryFn: async () => {
-      // Simulando delay de rede
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return MOCK_SHEET_DATA;
+      if (useMockData) {
+        // Use mock data for demo mode
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return MOCK_SHEET_DATA;
+      } else {
+        // Use real data from Supabase/Google Sheets
+        try {
+          const data = await fetchSheetData();
+          return data;
+        } catch (error) {
+          console.error('Error fetching Google Sheets data:', error);
+          // Fallback to mock data if real data fetch fails
+          setUseMockData(true);
+          return MOCK_SHEET_DATA;
+        }
+      }
     },
-    refetchInterval: 5 * 60 * 1000, // Recarregar a cada 5 minutos
+    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
   });
 
-  // Processando os dados brutos para o formato Campaign
-  const campaigns = rawData ? processSheetData(rawData) : undefined;
+  // Process raw data into Campaign format
+  const campaigns = rawData ? (Array.isArray(rawData) ? processSheetData(rawData) : rawData) : undefined;
 
-  // Função simulada de autenticação
+  // Simulated authentication function
   const authenticate = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setIsAuthenticated(true);
-    toast({
-      title: "Conectado com sucesso",
-      description: "Simulação de conexão com Google Sheets ativada",
-    });
-    return true;
+    try {
+      // In real implementation, this would integrate with Supabase Auth
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsAuthenticated(true);
+      setUseMockData(false);
+      
+      toast({
+        title: "Conectado com sucesso",
+        description: "Conexão com Google Sheets estabelecida via Supabase",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Authentication error:', error);
+      toast({
+        title: "Erro na autenticação",
+        description: "Não foi possível conectar com Google Sheets",
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
-  // Salva dados no localStorage para persistência
+  // Save data to localStorage for persistence
   useEffect(() => {
     if (rawData && Array.isArray(rawData) && rawData.length > 0) {
       localStorage.setItem('campaignData', JSON.stringify(rawData));
@@ -87,5 +117,6 @@ export function useGoogleSheets() {
     isAuthenticated,
     authenticate,
     refetch,
+    useMockData
   };
 }

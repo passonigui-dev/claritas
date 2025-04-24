@@ -6,7 +6,7 @@ import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 import { RefreshCcw, Lock, CheckCircle } from "lucide-react";
 
 export function GoogleSheetsConnect() {
-  const { isAuthenticated, authenticate, refetch, isLoading } = useGoogleSheets();
+  const { isAuthenticated, authenticate, refetch, isLoading, useMockData } = useGoogleSheets();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const handleAuthenticate = async () => {
@@ -41,7 +41,7 @@ export function GoogleSheetsConnect() {
             <>
               <div className="flex items-center space-x-2 text-green-600 mb-2">
                 <CheckCircle className="h-5 w-5" />
-                <span>Autenticado com sucesso</span>
+                <span>{useMockData ? "Demo mode" : "Autenticado com sucesso"}</span>
               </div>
               <Button 
                 onClick={handleRefresh} 
