@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Campaign } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { processSheetData } from '@/utils/sheetProcessing';
 
 // Dados mockados baseados na planilha real
 const MOCK_SHEET_DATA = [
@@ -43,7 +44,7 @@ export function useGoogleSheets() {
   
   // Query para simular busca de dados
   const { 
-    data: campaigns, 
+    data: rawData, 
     isLoading, 
     isError, 
     error, 
@@ -58,6 +59,9 @@ export function useGoogleSheets() {
     refetchInterval: 5 * 60 * 1000, // Recarregar a cada 5 minutos
   });
 
+  // Processando os dados brutos para o formato Campaign
+  const campaigns = rawData ? processSheetData(rawData) : undefined;
+
   // Função simulada de autenticação
   const authenticate = async () => {
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -71,17 +75,17 @@ export function useGoogleSheets() {
 
   // Salva dados no localStorage para persistência
   useEffect(() => {
-    if (campaigns && Array.isArray(campaigns) && campaigns.length > 0) {
-      localStorage.setItem('campaignData', JSON.stringify(campaigns));
+    if (rawData && Array.isArray(rawData) && rawData.length > 0) {
+      localStorage.setItem('campaignData', JSON.stringify(rawData));
       toast({
         title: "Dados atualizados",
         description: "Dashboard atualizado com os dados mais recentes da planilha.",
       });
     }
-  }, [campaigns]);
+  }, [rawData]);
 
   return {
-    campaigns: campaigns as Campaign[] | undefined,
+    campaigns,
     isLoading,
     isError,
     error,

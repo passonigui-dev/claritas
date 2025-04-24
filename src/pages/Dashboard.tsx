@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -16,6 +17,7 @@ import { mockChartData, mockStrengths, mockWeaknesses, mockActions, mockCampaign
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
 import { Campaign } from "@/types";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
+import { processSheetData } from "@/utils/sheetProcessing";
 
 export default function Dashboard() {
   const { campaigns: googleSheetsCampaigns, isLoading } = useGoogleSheets();
@@ -25,7 +27,14 @@ export default function Dashboard() {
   useEffect(() => {
     const storedData = localStorage.getItem('campaignData');
     if (storedData) {
-      setLocalCampaigns(JSON.parse(storedData));
+      try {
+        const parsedData = JSON.parse(storedData);
+        // Process the stored data to ensure it matches the Campaign type
+        const processedCampaigns = processSheetData(parsedData);
+        setLocalCampaigns(processedCampaigns);
+      } catch (error) {
+        console.error("Error processing stored campaign data:", error);
+      }
     }
   }, []);
 
