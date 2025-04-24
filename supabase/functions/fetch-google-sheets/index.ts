@@ -14,10 +14,10 @@ serve(async (req) => {
   }
 
   try {
-    // Use the new KEY secret instead of GOOGLE_API_KEY
+    // Check for required environment variables
     const GOOGLE_API_KEY = Deno.env.get('KEY')
     let SPREADSHEET_ID = Deno.env.get('SPREADSHEET_ID')
-    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A1:J1000'
+    const SHEET_RANGE = Deno.env.get('SHEET_RANGE') || 'Campanhas!A2:J1000'
     
     // Get request body
     const requestData = await req.json()
@@ -28,8 +28,15 @@ serve(async (req) => {
       console.log(`Using provided spreadsheet ID: ${SPREADSHEET_ID}`)
     }
 
-    if (!GOOGLE_API_KEY || !SPREADSHEET_ID) {
-      throw new Error('Missing required configuration')
+    // Detailed error checking to help with debugging
+    const missingConfigs = []
+    if (!GOOGLE_API_KEY) missingConfigs.push('KEY (Google API Key)')
+    if (!SPREADSHEET_ID) missingConfigs.push('SPREADSHEET_ID')
+    
+    if (missingConfigs.length > 0) {
+      const errorMessage = `Missing required configuration: ${missingConfigs.join(', ')}`
+      console.error(errorMessage)
+      throw new Error(errorMessage)
     }
 
     console.log(`Fetching Google Sheets data with API key: ${GOOGLE_API_KEY.substring(0, 5)}...`)

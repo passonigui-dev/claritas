@@ -38,6 +38,8 @@ export function SheetUploader() {
         throw new Error("Não foi possível extrair o ID da planilha da URL fornecida.");
       }
       
+      console.log("Chamando Edge Function com spreadsheetId:", spreadsheetId);
+      
       // Call the Supabase Edge Function to fetch the Google Sheets data
       const { data, error } = await supabase.functions.invoke('fetch-google-sheets', {
         body: { 
@@ -56,7 +58,9 @@ export function SheetUploader() {
         throw new Error("Formato de dados inválido recebido da API.");
       }
       
-      // Process the sheet data - skip header row
+      console.log("Dados recebidos com sucesso:", data.rows.length, "linhas");
+      
+      // Process the sheet data - skip header row if exists
       const processedData = processSheetData(data.rows.slice(1));
       
       // Store the processed data in localStorage
@@ -68,11 +72,22 @@ export function SheetUploader() {
       });
       
       navigate("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro completo:", error);
+      
+      let errorMessage = "Ocorreu um erro ao processar os dados. Tente novamente.";
+      if (error.message && typeof error.message === 'string') {
+        // Verificar se é um erro específico sobre falta de configuração
+        if (error.message.includes("Missing required configuration")) {
+          errorMessage = "Erro de configuração no servidor. Verifique se todas as chaves de API necessárias foram configuradas.";
+        } else if (error.message.includes("API key not valid")) {
+          errorMessage = "Chave de API do Google inválida. Por favor, verifique a configuração.";
+        }
+      }
+      
       toast({
         title: "Erro ao importar planilha",
-        description: "Ocorreu um erro ao processar os dados. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
