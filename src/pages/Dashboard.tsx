@@ -12,7 +12,7 @@ import {
   BarChart,
   Users
 } from "lucide-react";
-import { mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
+import { mockChartData, mockStrengths, mockWeaknesses, mockActions, mockCampaigns } from "@/data/mockData";
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
 import { Campaign } from "@/types";
 
