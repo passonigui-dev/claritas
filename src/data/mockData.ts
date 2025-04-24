@@ -1,4 +1,3 @@
-
 import { Action, Campaign, ChartData } from "@/types";
 
 export const mockCampaigns: Campaign[] = [
@@ -14,7 +13,8 @@ export const mockCampaigns: Campaign[] = [
     conversions: 342,
     ctr: 6.24,
     cpc: 0.35,
-    cpa: 8.04
+    cpa: 8.04,
+    reach: 95000
   },
   {
     id: "2",
@@ -28,7 +28,8 @@ export const mockCampaigns: Campaign[] = [
     conversions: 286,
     ctr: 5.47,
     cpc: 0.36,
-    cpa: 6.47
+    cpa: 6.47,
+    reach: 72000
   },
   {
     id: "3",
@@ -42,7 +43,8 @@ export const mockCampaigns: Campaign[] = [
     conversions: 187,
     ctr: 3.92,
     cpc: 0.39,
-    cpa: 20.59
+    cpa: 20.59,
+    reach: 180000
   },
   {
     id: "4",
@@ -56,7 +58,8 @@ export const mockCampaigns: Campaign[] = [
     conversions: 420,
     ctr: 5.83,
     cpc: 0.51,
-    cpa: 12.86
+    cpa: 12.86,
+    reach: 130000
   }
 ];
 
