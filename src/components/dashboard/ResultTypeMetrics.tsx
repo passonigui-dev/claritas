@@ -23,11 +23,26 @@ export function ResultTypeMetrics({ resultsByType, cpaByType, campaigns }: Resul
     campaign => selectedType === "All" || campaign.tipo_resultado === selectedType
   );
 
-  // Calculate metrics for filtered campaigns
-  const totalSpent = filteredCampaigns.reduce((sum, campaign) => sum + campaign.spent, 0);
-  const totalImpressions = filteredCampaigns.reduce((sum, campaign) => sum + campaign.impressions, 0);
-  const totalClicks = filteredCampaigns.reduce((sum, campaign) => sum + campaign.clicks, 0);
-  const totalReach = filteredCampaigns.reduce((sum, campaign) => sum + campaign.reach, 0);
+  // Calculate metrics for filtered campaigns - handling nulls and non-numeric values
+  const totalSpent = filteredCampaigns.reduce((sum, campaign) => {
+    const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
+    return sum + spent;
+  }, 0);
+  
+  const totalImpressions = filteredCampaigns.reduce((sum, campaign) => {
+    const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;
+    return sum + impressions;
+  }, 0);
+  
+  const totalClicks = filteredCampaigns.reduce((sum, campaign) => {
+    const clicks = typeof campaign.clicks === 'number' ? campaign.clicks : 0;
+    return sum + clicks;
+  }, 0);
+  
+  const totalReach = filteredCampaigns.reduce((sum, campaign) => {
+    const reach = typeof campaign.reach === 'number' ? campaign.reach : 0;
+    return sum + reach;
+  }, 0);
   
   // Calculate CPM and CPC for filtered campaigns
   const cpm = totalImpressions > 0 ? (totalSpent / totalImpressions) * 1000 : 0;

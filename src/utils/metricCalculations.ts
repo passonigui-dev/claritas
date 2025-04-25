@@ -2,10 +2,26 @@
 import { Campaign, ResultsByType } from "@/types";
 
 export const calculateMetrics = (campaigns: Campaign[]) => {
-  const totalSpent = campaigns.reduce((sum, campaign) => sum + campaign.spent, 0);
-  const totalImpressions = campaigns.reduce((sum, campaign) => sum + campaign.impressions, 0);
-  const totalClicks = campaigns.reduce((sum, campaign) => sum + campaign.clicks, 0);
-  const totalReach = campaigns.reduce((sum, campaign) => sum + campaign.reach, 0);
+  // Ensure we handle null, empty, or non-numeric values as zero
+  const totalSpent = campaigns.reduce((sum, campaign) => {
+    const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
+    return sum + spent;
+  }, 0);
+
+  const totalImpressions = campaigns.reduce((sum, campaign) => {
+    const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;
+    return sum + impressions;
+  }, 0);
+  
+  const totalClicks = campaigns.reduce((sum, campaign) => {
+    const clicks = typeof campaign.clicks === 'number' ? campaign.clicks : 0;
+    return sum + clicks;
+  }, 0);
+  
+  const totalReach = campaigns.reduce((sum, campaign) => {
+    const reach = typeof campaign.reach === 'number' ? campaign.reach : 0;
+    return sum + reach;
+  }, 0);
 
   // Group results by type
   const resultsByType = campaigns.reduce((acc: ResultsByType, campaign) => {
@@ -16,8 +32,8 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
         spent: 0
       };
     }
-    acc[resultType].count += campaign.conversions;
-    acc[resultType].spent += campaign.spent;
+    acc[resultType].count += (typeof campaign.conversions === 'number' ? campaign.conversions : 0);
+    acc[resultType].spent += (typeof campaign.spent === 'number' ? campaign.spent : 0);
     return acc;
   }, {});
 
@@ -48,6 +64,7 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
 };
 
 // Format as BRL currency with exactly 2 decimal places
+// Format using PT-BR locale with dot as thousand separator and comma as decimal separator
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
