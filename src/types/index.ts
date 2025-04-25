@@ -15,6 +15,7 @@ export interface Campaign {
   startDate?: string;
   endDate?: string;
   campaignUrl?: string;
+  tipo_resultado?: string;
 }
 
 export interface ChartData {

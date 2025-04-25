@@ -47,7 +47,7 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
   };
 };
 
-// Format as BRL currency with 2 decimal places
+// Format as BRL currency with exactly 2 decimal places
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -57,7 +57,7 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-// Format metric with PT-BR thousand separator
+// Format metric with PT-BR thousand separator, no decimals
 export const formatMetric = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
     minimumFractionDigits: 0,
