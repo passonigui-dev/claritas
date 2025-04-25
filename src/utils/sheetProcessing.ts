@@ -26,11 +26,14 @@ const formatNumber = (value: any): string => {
   }).format(numberValue);
 };
 
+// Improved normalization function for BRL currency values
 const normalizeNumber = (value: any): number => {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
     // Remove currency symbols, spaces and replace comma with dot for decimal separator
-    const cleaned = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const cleaned = value.replace(/[^0-9,.-]/g, '')
+                         .replace(/\./g, '')  // Remove dots (thousand separators)
+                         .replace(',', '.'); // Replace comma with dot for decimal
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   }

@@ -39,7 +39,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Use Google Sheets data if available, otherwise use localStorage data, and fallback to mock data as last resort
+  // Use Google Sheets data if available, otherwise use localStorage data, and fallback to empty array as last resort
   const campaigns = googleSheetsCampaigns && googleSheetsCampaigns.length > 0 
     ? googleSheetsCampaigns 
     : localCampaigns.length > 0 
