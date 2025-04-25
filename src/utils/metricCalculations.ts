@@ -1,4 +1,3 @@
-
 import { Campaign, ResultsByType } from "@/types";
 
 export const calculateMetrics = (campaigns: Campaign[]) => {
@@ -12,10 +11,18 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
   // Ensure we handle null, empty, or non-numeric values as zero
   const totalSpent = campaigns.reduce((sum, campaign) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
+    console.log(`Campaign: ${campaign.name}, Spent: ${spent}`);
     return sum + spent;
   }, 0);
   
   console.log('Total spent calculated:', totalSpent.toFixed(2));
+  console.log('Number of campaigns:', campaigns.length);
+  console.log('Campaigns with non-zero spend:', 
+    campaigns.filter(c => c.spent > 0).map(c => ({
+      name: c.name, 
+      spent: c.spent
+    }))
+  );
 
   const totalImpressions = campaigns.reduce((sum, campaign) => {
     const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;
