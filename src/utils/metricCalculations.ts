@@ -2,6 +2,13 @@
 import { Campaign, ResultsByType } from "@/types";
 
 export const calculateMetrics = (campaigns: Campaign[]) => {
+  // For debugging - log the incoming spent values
+  console.log('Raw spent values for calculation:', campaigns.map(c => ({
+    name: c.name,
+    spent: c.spent,
+    type: typeof c.spent
+  })));
+
   // Ensure we handle null, empty, or non-numeric values as zero
   const totalSpent = campaigns.reduce((sum, campaign) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;

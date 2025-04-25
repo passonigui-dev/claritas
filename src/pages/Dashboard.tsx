@@ -16,7 +16,7 @@ import {
   BarChart3,
   Users
 } from "lucide-react";
-import { mockChartData, mockStrengths, mockWeaknesses, mockActions, mockCampaigns } from "@/data/mockData";
+import { mockChartData, mockStrengths, mockWeaknesses, mockActions } from "@/data/mockData";
 import { calculateMetrics, formatCurrency, formatMetric } from "@/utils/metricCalculations";
 import { Campaign } from "@/types";
 import { useGoogleSheets } from "@/hooks/useGoogleSheets";
@@ -24,7 +24,8 @@ import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 export default function Dashboard() {
   const { campaigns: googleSheetsCampaigns, isLoading, useMockData } = useGoogleSheets();
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([]);
-
+  
+  // Load campaigns from localStorage
   useEffect(() => {
     const storedData = localStorage.getItem('campaignData');
     if (storedData) {
@@ -38,20 +39,21 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Determine which campaigns data to use
+  // Use Google Sheets data if available, otherwise use localStorage data, and fallback to mock data as last resort
   const campaigns = googleSheetsCampaigns && googleSheetsCampaigns.length > 0 
     ? googleSheetsCampaigns 
     : localCampaigns.length > 0 
       ? localCampaigns 
-      : mockCampaigns;
+      : []; // Don't use mock data for real metrics calculation
 
   console.log('Current data source:', {
     hasGoogleSheets: Boolean(googleSheetsCampaigns?.length),
     hasLocalStorage: Boolean(localCampaigns.length),
-    usingMockData: campaigns === mockCampaigns,
+    usingEmptyArray: campaigns.length === 0,
     totalCampaigns: campaigns.length
   });
 
+  // Calculate metrics based on actual campaign data
   const {
     totalSpent,
     totalImpressions,
@@ -62,6 +64,12 @@ export default function Dashboard() {
     resultsByType,
     cpaByType
   } = calculateMetrics(campaigns);
+
+  console.log('Calculated metrics:', {
+    totalSpent,
+    campaignsLength: campaigns.length,
+    spentValues: campaigns.map(c => c.spent)
+  });
 
   return (
     <>

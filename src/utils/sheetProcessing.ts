@@ -27,11 +27,12 @@ const formatNumber = (value: any): string => {
 };
 
 const normalizeNumber = (value: any): number => {
-  if (typeof value === 'number') return Math.floor(value);
+  if (typeof value === 'number') return value;
   if (typeof value === 'string') {
-    // Remove currency symbols and convert to number
-    const cleaned = value.replace(/[^0-9.-]+/g, '');
-    return Math.floor(Number(cleaned)) || 0;
+    // Remove currency symbols, spaces and replace comma with dot for decimal separator
+    const cleaned = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
   }
   return 0;
 };
@@ -91,6 +92,9 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
 
   console.log("Raw data processed (first row):", rawData[0]);
 
+  // Log the data to debug
+  console.log("Raw spent values:", rawData.map(r => r.valor_usado_brl));
+
   // Transform raw data into Campaign objects for the dashboard
   const campaigns = rawData
     .filter(row => row.nome_campanha && row.plataforma)
@@ -99,13 +103,17 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
       const status = (row.status || '').toLowerCase().includes("ativ") ? "active" : "paused";
 
+      // Properly handle monetary values, ensuring we parse them correctly
+      const spentValue = normalizeNumber(row.valor_usado_brl);
+      console.log(`Campaign ${row.nome_campanha} - Raw spent: ${row.valor_usado_brl}, Parsed: ${spentValue}`);
+
       return {
         id: campaignId,
         name: row.nome_campanha || 'Unnamed Campaign',
         platform: platformType,
         status: status,
         budget: normalizeNumber(row.orcamento_campanha),
-        spent: normalizeNumber(row.valor_usado_brl),
+        spent: spentValue,
         impressions: normalizeNumber(row.impressoes),
         clicks: normalizeNumber(row.cliques_link),
         conversions: normalizeNumber(row.resultados),
@@ -113,13 +121,18 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
         ctr: normalizeNumber(row.impressoes) > 0 ? 
           (normalizeNumber(row.cliques_link) / normalizeNumber(row.impressoes)) * 100 : 0,
         cpc: normalizeNumber(row.cliques_link) > 0 ? 
-          normalizeNumber(row.valor_usado_brl) / normalizeNumber(row.cliques_link) : 0,
+          spentValue / normalizeNumber(row.cliques_link) : 0,
         cpa: normalizeNumber(row.resultados) > 0 ? 
-          normalizeNumber(row.valor_usado_brl) / normalizeNumber(row.resultados) : 0,
+          spentValue / normalizeNumber(row.resultados) : 0,
         startDate: row.data_inicial || '',
-        endDate: row.data_final || ''
+        endDate: row.data_final || '',
+        tipo_resultado: row.tipo_resultado || 'Outros'
       };
     });
+
+  // Log total spent to help debug
+  const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
+  console.log(`Total spent across all campaigns: ${totalSpent}`);
 
   return { campaigns, rawData };
 };
