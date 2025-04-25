@@ -14,6 +14,8 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
     return sum + spent;
   }, 0);
+  
+  console.log('Total spent calculated:', totalSpent.toFixed(2));
 
   const totalImpressions = campaigns.reduce((sum, campaign) => {
     const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;

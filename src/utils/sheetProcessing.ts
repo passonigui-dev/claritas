@@ -26,11 +26,11 @@ const formatNumber = (value: any): string => {
   }).format(numberValue);
 };
 
-// Improved normalization function for BRL currency values
+// Enhanced normalization function for BRL currency values
 const normalizeNumber = (value: any): number => {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
-    // Remove currency symbols, spaces and replace comma with dot for decimal separator
+    // First, clean the string from any non-numeric characters except comma and dot
     const cleaned = value.replace(/[^0-9,.-]/g, '')
                          .replace(/\./g, '')  // Remove dots (thousand separators)
                          .replace(',', '.'); // Replace comma with dot for decimal
@@ -95,8 +95,21 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
 
   console.log("Raw data processed (first row):", rawData[0]);
 
-  // Log the data to debug
+  // Log the raw values for valor_usado_brl to debug
   console.log("Raw spent values:", rawData.map(r => r.valor_usado_brl));
+  
+  // Calculate total spent for debugging
+  const totalRawSpent = rows.slice(dataStartIndex).reduce((sum, row) => {
+    const spentIndex = headers.indexOf('valor_usado_brl');
+    if (spentIndex >= 0 && spentIndex < row.length) {
+      const rawValue = row[spentIndex];
+      const normalizedValue = normalizeNumber(rawValue);
+      return sum + normalizedValue;
+    }
+    return sum;
+  }, 0);
+  
+  console.log("Total raw spent calculated directly from sheet:", totalRawSpent);
 
   // Transform raw data into Campaign objects for the dashboard
   const campaigns = rawData
@@ -106,7 +119,7 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
       const status = (row.status || '').toLowerCase().includes("ativ") ? "active" : "paused";
 
-      // Properly handle monetary values, ensuring we parse them correctly
+      // Get the raw value from the spreadsheet and normalize it
       const spentValue = normalizeNumber(row.valor_usado_brl);
       console.log(`Campaign ${row.nome_campanha} - Raw spent: ${row.valor_usado_brl}, Parsed: ${spentValue}`);
 
@@ -135,7 +148,7 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
 
   // Log total spent to help debug
   const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
-  console.log(`Total spent across all campaigns: ${totalSpent}`);
+  console.log(`Total spent across all campaigns: ${totalSpent.toFixed(2)}`);
 
   return { campaigns, rawData };
 };

@@ -68,7 +68,7 @@ export default function Dashboard() {
   console.log('Calculated metrics:', {
     totalSpent,
     campaignsLength: campaigns.length,
-    spentValues: campaigns.map(c => c.spent)
+    spentValues: campaigns.slice(0, 10).map(c => c.spent) // Log just first 10 for brevity
   });
 
   return (
