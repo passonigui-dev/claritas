@@ -147,15 +147,15 @@ export default function Dashboard() {
             campaigns={campaigns}
           />
 
-          {/* Performance Chart & Action Plan */}
-          <div className="grid gap-8 md:grid-cols-3 mb-8">
-            <PerformanceChart 
-              data={mockChartData}
-              className="col-span-full md:col-span-2"
-            />
-            <div className="col-span-full md:col-span-1">
-              <ActionPlan actions={mockActions} />
-            </div>
+          {/* Performance Chart - Now full width */}
+          <PerformanceChart 
+            data={mockChartData}
+            className="mb-8"
+          />
+
+          {/* Action Plan - Now full width */}
+          <div className="mb-8">
+            <ActionPlan actions={mockActions} />
           </div>
 
           {/* Analysis Summary */}
