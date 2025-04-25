@@ -9,16 +9,15 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
 
 interface DateFilterProps {
   onDateChange?: (from: Date | undefined, to: Date | undefined) => void;
 }
 
 export function DateFilter({ onDateChange }: DateFilterProps) {
-  const [date, setDate] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  // Update the state type to match DateRange from react-day-picker
+  const [date, setDate] = useState<DateRange>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
@@ -30,6 +29,7 @@ export function DateFilter({ onDateChange }: DateFilterProps) {
     
     const now = new Date();
     let from: Date | undefined;
+    let to: Date | undefined = new Date();
     
     switch (value) {
       case "today":
@@ -58,7 +58,6 @@ export function DateFilter({ onDateChange }: DateFilterProps) {
         return;
     }
     
-    const to = new Date();
     setDate({ from, to });
     if (onDateChange) onDateChange(from, to);
   };
@@ -110,8 +109,10 @@ export function DateFilter({ onDateChange }: DateFilterProps) {
               defaultMonth={date.from}
               selected={date}
               onSelect={(selectedDate) => {
-                setDate(selectedDate);
-                if (onDateChange) onDateChange(selectedDate?.from, selectedDate?.to);
+                if (selectedDate) {
+                  setDate(selectedDate);
+                  if (onDateChange) onDateChange(selectedDate.from, selectedDate.to);
+                }
               }}
               numberOfMonths={2}
             />
