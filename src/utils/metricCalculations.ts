@@ -1,3 +1,4 @@
+
 import { Campaign, ResultsByType } from "@/types";
 
 export const calculateMetrics = (campaigns: Campaign[]) => {
@@ -8,10 +9,12 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
     type: typeof c.spent
   })));
 
-  // Ensure we handle null, empty, or non-numeric values as zero
+  // Calculate total spent - ensure we handle null, empty, or non-numeric values as zero
+  let totalDebug = 0;
   const totalSpent = campaigns.reduce((sum, campaign) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
-    console.log(`Campaign: ${campaign.name}, Spent: ${spent}`);
+    totalDebug += spent;
+    console.log(`Campaign: ${campaign.name}, Spent: ${spent}, Running total: ${totalDebug.toFixed(2)}`);
     return sum + spent;
   }, 0);
   
@@ -82,6 +85,9 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
 // Format as BRL currency with exactly 2 decimal places
 // Format using PT-BR locale with dot as thousand separator and comma as decimal separator
 export const formatCurrency = (value: number): string => {
+  // Debug currency formatting
+  console.log(`Formatting currency value: ${value}`);
+  
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',

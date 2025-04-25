@@ -29,6 +29,9 @@ export function ResultTypeMetrics({ resultsByType, cpaByType, campaigns }: Resul
     return sum + spent;
   }, 0);
   
+  // Debug the total spent for the selected type
+  console.log(`ResultTypeMetrics - Total spent for ${selectedType}:`, totalSpent.toFixed(2));
+  
   const totalImpressions = filteredCampaigns.reduce((sum, campaign) => {
     const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;
     return sum + impressions;

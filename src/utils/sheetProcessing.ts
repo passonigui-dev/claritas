@@ -34,6 +34,10 @@ const normalizeNumber = (value: any): number => {
     const cleaned = value.replace(/[^0-9,.-]/g, '')
                          .replace(/\./g, '')  // Remove dots (thousand separators)
                          .replace(',', '.'); // Replace comma with dot for decimal
+    
+    // Debug the currency normalization
+    console.log(`Normalizing value: "${value}" -> "${cleaned}" -> ${parseFloat(cleaned)}`);
+    
     const parsed = parseFloat(cleaned);
     return isNaN(parsed) ? 0 : parsed;
   }
@@ -93,8 +97,6 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
     return rawRow as RawCampaignData;
   });
 
-  console.log("Raw data processed (first row):", rawData[0]);
-
   // Log the raw values for valor_usado_brl to debug
   console.log("Raw spent values:", rawData.map(r => r.valor_usado_brl));
   
@@ -109,7 +111,7 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
     return sum;
   }, 0);
   
-  console.log("Total raw spent calculated directly from sheet:", totalRawSpent);
+  console.log("Total raw spent calculated directly from sheet:", totalRawSpent.toFixed(2));
 
   // Transform raw data into Campaign objects for the dashboard
   const campaigns = rawData
