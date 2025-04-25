@@ -1,6 +1,40 @@
 
 import { Campaign, RawCampaignData } from "@/types";
 
+// Format date from YYYY-MM-DD to DD/MM/YYYY
+const formatDate = (value: any): string => {
+  if (!value) return '--/--/----';
+  try {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return '--/--/----';
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  } catch {
+    return '--/--/----';
+  }
+};
+
+// Format currency values
+const formatCurrency = (value: any): string => {
+  const numberValue = normalizeNumber(value);
+  return new Intl.NumberFormat('pt-BR', { 
+    style: 'currency', 
+    currency: 'BRL' 
+  }).format(numberValue);
+};
+
+// Format number with thousand separator
+const formatNumber = (value: any): string => {
+  const numberValue = normalizeNumber(value);
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(numberValue);
+};
+
 const normalizeNumber = (value: any): number => {
   if (typeof value === 'number') return value;
   if (typeof value === 'string') {
@@ -11,32 +45,22 @@ const normalizeNumber = (value: any): number => {
   return 0;
 };
 
-const normalizeDate = (date: string): string => {
-  if (!date) return '';
-  try {
-    // Attempt to parse and format the date
-    const parsed = new Date(date);
-    return parsed.toISOString().split('T')[0];
-  } catch {
-    return date;
-  }
+const normalizeText = (value: any): string => {
+  return value !== undefined && value !== null ? String(value).trim() : '';
 };
 
-export const processSheetData = (rows: any[]): Campaign[] => {
+export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData: RawCampaignData[] } => {
   if (!rows || rows.length < 2) {
     console.log("No valid data rows received from Google Sheets");
-    return [];
+    return { campaigns: [], rawData: [] };
   }
 
-  // O problema estava aqui: a primeira linha não são os cabeçalhos, mas dados
-  // Vamos verificar se o primeiro item é uma data (2025-04-23) e não um cabeçalho
+  // Check if first row is data
   const firstRowIsData = rows[0][0] && (
     rows[0][0].toString().match(/^\d{4}-\d{2}-\d{2}$/) || 
     rows[0][0].toString().match(/^\d{2}\/\d{2}\/\d{4}$/)
   );
   
-  // Se a primeira linha parece ser dados e não cabeçalhos,
-  // vamos criar cabeçalhos padrão baseados na especificação fornecida
   const headers = firstRowIsData ? 
     ["dia", "objetivo", "plataforma", "nome_campanha", "nome_conjunto", 
      "nome_anuncio", "orcamento_campanha", "tipo_orcamento_campanha", 
@@ -45,71 +69,68 @@ export const processSheetData = (rows: any[]): Campaign[] => {
      "nivel", "cliques_link", "data_inicial", "data_final"] :
     rows[0].map((header: any) => header ? header.toString().toLowerCase().trim() : "");
   
-  console.log("Headers identificados:", headers);
-  console.log("Primeira linha de dados:", rows[firstRowIsData ? 0 : 1]);
+  console.log("Headers identified:", headers);
   
-  // Verificamos se temos cabeçalhos válidos
   if (headers.filter(Boolean).length === 0) {
     console.error("No valid headers found in the data");
     throw new Error("Não foi possível identificar cabeçalhos válidos na planilha.");
   }
 
-  // Determinamos a linha inicial para os dados
   const dataStartIndex = firstRowIsData ? 0 : 1;
   
-  // Map data rows to objects using headers
-  const processedData = rows.slice(dataStartIndex).map(row => {
-    const rowData: Record<string, any> = {};
+  // Process raw data with proper formatting
+  const rawData = rows.slice(dataStartIndex).map((row: any[]) => {
+    const rawRow: Record<string, any> = {};
     headers.forEach((header: string, index: number) => {
-      // Só processa se o cabeçalho existir e não estiver vazio
       if (header && index < row.length) {
         const value = row[index];
-        // Converte valores numéricos
-        if (['valor_usado_brl', 'orcamento_campanha', 'orcamento_conjunto', 
-             'impressoes', 'alcance', 'resultados', 'cliques_link'].includes(header)) {
-          rowData[header] = normalizeNumber(value);
-        } else if (['data_inicial', 'data_final', 'dia'].includes(header)) {
-          rowData[header] = normalizeDate(value !== undefined && value !== null ? value.toString() : '');
+        
+        // Format values based on field type
+        if (['dia', 'data_inicial', 'data_final'].includes(header)) {
+          rawRow[header] = formatDate(value);
+        } else if (['orcamento_campanha', 'orcamento_conjunto', 'valor_usado_brl'].includes(header)) {
+          rawRow[header] = formatCurrency(value);
+        } else if (['impressoes', 'alcance', 'resultados', 'cliques_link'].includes(header)) {
+          rawRow[header] = formatNumber(value);
         } else {
-          rowData[header] = value !== undefined && value !== null ? value.toString() : '';
+          rawRow[header] = normalizeText(value);
         }
       }
     });
-    return rowData as RawCampaignData;
+    return rawRow as RawCampaignData;
   });
 
-  console.log("Dados processados (primeiros 2):", processedData.slice(0, 2));
+  console.log("Raw data processed (first row):", rawData[0]);
 
-  // Transforma os dados processados em objetos Campaign
-  return processedData
-    .filter(row => row.nome_campanha && row.plataforma) // Garante que campos obrigatórios existam
+  // Transform raw data into Campaign objects for the dashboard
+  const campaigns = rawData
+    .filter(row => row.nome_campanha && row.plataforma)
     .map((row: RawCampaignData, index: number): Campaign => {
-      // Gera um ID único usando múltiplos campos
       const campaignId = `${row.plataforma || 'unknown'}-${row.nome_campanha || 'unnamed'}-${index}`.toLowerCase().replace(/\s+/g, '-');
-      
-      // Determina o tipo de plataforma com fallback seguro
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
-      
-      // Determina o status com fallback seguro
-      const normalizedStatus = (row.status || '').toLowerCase();
-      const status = normalizedStatus.includes("ativ") ? "active" : "paused";
+      const status = (row.status || '').toLowerCase().includes("ativ") ? "active" : "paused";
 
       return {
         id: campaignId,
         name: row.nome_campanha || 'Unnamed Campaign',
         platform: platformType,
         status: status,
-        budget: row.orcamento_campanha || 0,
-        spent: row.valor_usado_brl || 0,
-        impressions: row.impressoes || 0,
-        clicks: row.cliques_link || 0,
-        conversions: row.resultados || 0,
-        reach: row.alcance || 0,
-        ctr: row.impressoes > 0 ? (row.cliques_link / row.impressoes) * 100 : 0,
-        cpc: row.cliques_link > 0 ? row.valor_usado_brl / row.cliques_link : 0,
-        cpa: row.resultados > 0 ? row.valor_usado_brl / row.resultados : 0,
+        budget: normalizeNumber(row.orcamento_campanha),
+        spent: normalizeNumber(row.valor_usado_brl),
+        impressions: normalizeNumber(row.impressoes),
+        clicks: normalizeNumber(row.cliques_link),
+        conversions: normalizeNumber(row.resultados),
+        reach: normalizeNumber(row.alcance),
+        ctr: normalizeNumber(row.impressoes) > 0 ? 
+          (normalizeNumber(row.cliques_link) / normalizeNumber(row.impressoes)) * 100 : 0,
+        cpc: normalizeNumber(row.cliques_link) > 0 ? 
+          normalizeNumber(row.valor_usado_brl) / normalizeNumber(row.cliques_link) : 0,
+        cpa: normalizeNumber(row.resultados) > 0 ? 
+          normalizeNumber(row.valor_usado_brl) / normalizeNumber(row.resultados) : 0,
         startDate: row.data_inicial || '',
         endDate: row.data_final || ''
       };
     });
+
+  return { campaigns, rawData };
 };

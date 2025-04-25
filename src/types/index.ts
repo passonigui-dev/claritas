@@ -43,18 +43,18 @@ export interface RawCampaignData {
   nome_campanha: string;
   nome_conjunto: string;
   nome_anuncio: string;
-  orcamento_campanha: number;
+  orcamento_campanha: string;
   tipo_orcamento_campanha: string;
-  orcamento_conjunto: number;
+  orcamento_conjunto: string;
   tipo_orcamento_conjunto: string;
-  valor_usado_brl: number;
-  impressoes: number;
-  alcance: number;
+  valor_usado_brl: string;
+  impressoes: string;
+  alcance: string;
   tipo_resultado: string;
-  resultados: number;
+  resultados: string;
   status: string;
   nivel: string;
-  cliques_link: number;
+  cliques_link: string;
   data_inicial: string;
   data_final: string;
 }

@@ -12,7 +12,7 @@ export function useGoogleSheets() {
   const [rawData, setRawData] = useState<RawCampaignData[]>([]);
   
   const { 
-    data: campaigns,
+    data: campaignData,
     isLoading, 
     isError, 
     error, 
@@ -40,27 +40,15 @@ export function useGoogleSheets() {
 
         console.log('Received data from Google Sheets:', data.rows.length, 'rows');
         
-        // Store raw data for future AI processing
-        if (data.rows.length > 1) {
-          const headers = data.rows[0];
-          const rawDataArray = data.rows.slice(1).map((row: any[]) => {
-            const obj: Record<string, any> = {};
-            headers.forEach((header: string, index: number) => {
-              const key = header.toLowerCase().trim();
-              obj[key] = row[index];
-            });
-            return obj;
-          });
-          setRawData(rawDataArray as RawCampaignData[]);
-          // Store complete data in localStorage
-          localStorage.setItem('campaignRawData', JSON.stringify(rawDataArray));
-        }
-
-        setUseMockData(false);
         const processedData = processSheetData(data.rows);
         console.log('Processed campaign data:', processedData);
         
-        return processedData;
+        // Store raw data for future AI processing
+        setRawData(processedData.rawData);
+        localStorage.setItem('campaignRawData', JSON.stringify(processedData.rawData));
+        
+        setUseMockData(false);
+        return processedData.campaigns;
       } catch (error) {
         console.error('Error fetching Google Sheets data:', error);
         setUseMockData(true);
@@ -73,14 +61,14 @@ export function useGoogleSheets() {
 
   // Save data to localStorage for persistence
   useEffect(() => {
-    if (campaigns && Array.isArray(campaigns) && campaigns.length > 0) {
-      localStorage.setItem('campaignData', JSON.stringify(campaigns));
+    if (campaignData && Array.isArray(campaignData) && campaignData.length > 0) {
+      localStorage.setItem('campaignData', JSON.stringify(campaignData));
       toast({
         title: "Dados atualizados",
         description: "Dashboard atualizado com os dados mais recentes da planilha.",
       });
     }
-  }, [campaigns]);
+  }, [campaignData]);
 
   const authenticate = async () => {
     setIsAuthenticated(true);
@@ -94,8 +82,8 @@ export function useGoogleSheets() {
   };
 
   return {
-    campaigns,
-    rawData, // Now exposing raw data for AI processing
+    campaigns: campaignData,
+    rawData,
     isLoading,
     isError,
     error,
