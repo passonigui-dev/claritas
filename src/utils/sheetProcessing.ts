@@ -182,12 +182,15 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
       const status = (row.status || '').toLowerCase().includes("ativ") ? "active" : "paused";
 
+      // Use dia as the primary date field
+      const startDate = row.dia || '';
+
       // Raw value directly from spreadsheet for debugging
       const originalValue = rows[index + dataStartIndex][headers.indexOf('valor_usado_brl')];
       
       // Parse directly from original value to ensure accuracy
       const spentValue = normalizeNumber(originalValue);
-      console.log(`Campaign ${row.nome_campanha} - Raw spent: "${originalValue}", Parsed: ${spentValue}`);
+      console.log(`Campaign ${row.nome_campanha} - Date: ${startDate}, Raw spent: "${originalValue}", Parsed: ${spentValue}`);
 
       return {
         id: campaignId,
@@ -206,7 +209,7 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
           spentValue / normalizeNumber(row.cliques_link) : 0,
         cpa: normalizeNumber(row.resultados) > 0 ? 
           spentValue / normalizeNumber(row.resultados) : 0,
-        startDate: row.data_inicial || '',
+        startDate: startDate,
         endDate: row.data_final || '',
         tipo_resultado: row.tipo_resultado || 'Outros'
       };

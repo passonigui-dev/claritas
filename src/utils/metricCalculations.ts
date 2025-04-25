@@ -1,10 +1,16 @@
+
 import { Campaign, ResultsByType } from "@/types";
 
 export const calculateMetrics = (campaigns: Campaign[], dateFrom?: Date, dateTo?: Date) => {
-  // Filter campaigns by date range if provided
+  // Filter campaigns by date range using 'dia' field
   const filteredCampaigns = campaigns.filter(campaign => {
     if (!dateFrom || !dateTo || !campaign.startDate) return true;
-    const campaignDate = new Date(campaign.startDate);
+    
+    // Parse dia from DD/MM/YYYY to Date object
+    const [day, month, year] = campaign.startDate.split('/').map(Number);
+    if (!day || !month || !year) return false;
+    
+    const campaignDate = new Date(year, month - 1, day); // month is 0-based
     return campaignDate >= dateFrom && campaignDate <= dateTo;
   });
 
@@ -12,12 +18,8 @@ export const calculateMetrics = (campaigns: Campaign[], dateFrom?: Date, dateTo?
   console.log('Date filter:', { dateFrom, dateTo });
   console.log('Total campaigns before filter:', campaigns.length);
   console.log('Total campaigns after filter:', filteredCampaigns.length);
-  
-  // For debugging - log the incoming spent values
-  console.log('Raw spent values for calculation:', filteredCampaigns.map(c => ({
+  console.log('Filtered campaigns date range:', filteredCampaigns.map(c => ({
     name: c.name,
-    spent: c.spent,
-    type: typeof c.spent,
     date: c.startDate
   })));
 
@@ -56,7 +58,7 @@ export const calculateMetrics = (campaigns: Campaign[], dateFrom?: Date, dateTo?
     return sum + reach;
   }, 0);
 
-  // Group results by type
+  // Group results by type with date filtering
   const resultsByType = filteredCampaigns.reduce((acc: ResultsByType, campaign) => {
     const resultType = campaign.tipo_resultado || 'Outros';
     if (!acc[resultType]) {
