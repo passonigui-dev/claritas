@@ -143,7 +143,8 @@ export class GoogleSheetsService {
         return rowData;
       });
 
-      return processSheetData(rawData);
+      // Return just the campaigns array from the processSheetData result
+      return processSheetData(rawData).campaigns;
     } catch (error) {
       console.error('Erro ao buscar dados da planilha:', error);
       throw error;

@@ -18,8 +18,8 @@ export const fetchSheetData = async (): Promise<Campaign[]> => {
 
     if (error) throw error
 
-    // Process the raw data from the sheet into our Campaign format
-    return processSheetData(data.rows)
+    // Process the raw data from the sheet into our Campaign format and return just the campaigns array
+    return processSheetData(data.rows).campaigns
   } catch (error) {
     console.error('Error fetching sheet data:', error)
     throw error

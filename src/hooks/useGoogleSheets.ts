@@ -41,7 +41,7 @@ export function useGoogleSheets() {
         console.log('Received data from Google Sheets:', data.rows.length, 'rows');
         
         const processedData = processSheetData(data.rows);
-        console.log('Processed campaign data:', processedData);
+        console.log('Processed campaign data:', processedData.campaigns);
         
         // Store raw data for future AI processing
         setRawData(processedData.rawData);

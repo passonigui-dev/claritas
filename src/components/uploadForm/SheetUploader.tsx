@@ -74,12 +74,12 @@ export function SheetUploader() {
         // Process the sheet data
         const processedData = processSheetData(data.rows);
         
-        if (processedData.length === 0) {
+        if (processedData.campaigns.length === 0) {
           throw new Error("Não foi possível processar os dados da planilha. Verifique se há pelo menos uma campanha válida.");
         }
         
         // Store the processed data in localStorage
-        localStorage.setItem('campaignData', JSON.stringify(processedData));
+        localStorage.setItem('campaignData', JSON.stringify(processedData.campaigns));
         
         // Store raw data for AI processing
         try {
