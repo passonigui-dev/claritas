@@ -17,16 +17,7 @@ const formatDate = (value: any): string => {
   }
 };
 
-// Format currency values
-const formatCurrency = (value: any): string => {
-  const numberValue = normalizeNumber(value);
-  return new Intl.NumberFormat('pt-BR', { 
-    style: 'currency', 
-    currency: 'BRL' 
-  }).format(numberValue);
-};
-
-// Format number with thousand separator
+// Format number with thousand separator (PT-BR)
 const formatNumber = (value: any): string => {
   const numberValue = normalizeNumber(value);
   return new Intl.NumberFormat('pt-BR', {
@@ -36,11 +27,11 @@ const formatNumber = (value: any): string => {
 };
 
 const normalizeNumber = (value: any): number => {
-  if (typeof value === 'number') return value;
+  if (typeof value === 'number') return Math.floor(value);
   if (typeof value === 'string') {
     // Remove currency symbols and convert to number
     const cleaned = value.replace(/[^0-9.-]+/g, '');
-    return Number(cleaned) || 0;
+    return Math.floor(Number(cleaned)) || 0;
   }
   return 0;
 };
@@ -88,9 +79,7 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
         // Format values based on field type
         if (['dia', 'data_inicial', 'data_final'].includes(header)) {
           rawRow[header] = formatDate(value);
-        } else if (['orcamento_campanha', 'orcamento_conjunto', 'valor_usado_brl'].includes(header)) {
-          rawRow[header] = formatCurrency(value);
-        } else if (['impressoes', 'alcance', 'resultados', 'cliques_link'].includes(header)) {
+        } else if (['orcamento_campanha', 'orcamento_conjunto', 'valor_usado_brl', 'impressoes', 'alcance', 'resultados', 'cliques_link'].includes(header)) {
           rawRow[header] = formatNumber(value);
         } else {
           rawRow[header] = normalizeText(value);

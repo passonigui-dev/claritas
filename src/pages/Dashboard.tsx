@@ -27,9 +27,8 @@ export default function Dashboard() {
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
-        const processedCampaigns = processSheetData(parsedData);
-        setLocalCampaigns(processedCampaigns);
-        console.log('Loaded campaigns from localStorage:', processedCampaigns);
+        setLocalCampaigns(parsedData.campaigns || []);
+        console.log('Loaded campaigns from localStorage:', parsedData.campaigns);
       } catch (error) {
         console.error("Error processing stored campaign data:", error);
       }

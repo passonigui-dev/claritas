@@ -9,15 +9,15 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
   const totalReach = campaigns.reduce((sum, campaign) => sum + campaign.reach, 0);
 
   const cpm = totalImpressions > 0 
-    ? (totalSpent / totalImpressions) * 1000 
+    ? Math.floor((totalSpent / totalImpressions) * 1000)
     : 0;
 
   const cpc = totalClicks > 0 
-    ? totalSpent / totalClicks 
+    ? Math.floor(totalSpent / totalClicks)
     : 0;
 
   const cpa = totalConversions > 0 
-    ? totalSpent / totalConversions 
+    ? Math.floor(totalSpent / totalConversions)
     : 0;
 
   return {
@@ -33,13 +33,15 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
 };
 
 export const formatCurrency = (value: number): string => {
-  return `R$ ${value.toFixed(2)}`;
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
 };
 
 export const formatMetric = (value: number): string => {
-  return value.toLocaleString('pt-BR', { 
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2 
-  });
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
 };
-
