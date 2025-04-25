@@ -5,6 +5,7 @@ import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
 import { CampaignList } from "@/components/dashboard/CampaignList";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
 import { AnalysisSummary } from "@/components/dashboard/AnalysisSummary";
+import { ResultsSection } from "@/components/dashboard/ResultsSection";
 import { GoogleSheetsConnect } from "@/components/dashboard/GoogleSheetsConnect";
 import { 
   DollarSign, 
@@ -53,17 +54,16 @@ export default function Dashboard() {
     totalSpent,
     totalImpressions,
     totalClicks,
-    totalConversions,
     totalReach,
     cpm,
     cpc,
-    cpa
+    resultsByType,
+    cpaByType
   } = calculateMetrics(campaigns);
 
   return (
     <>
       <Navbar />
-      
       <main className="py-8">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-start mb-8">
@@ -88,59 +88,64 @@ export default function Dashboard() {
             <KpiCard
               title="Total Investido"
               value={formatCurrency(totalSpent)}
-              description="Soma do investimento em todas as campanhas"
+              description="Total investment across all campaigns"
               icon={DollarSign}
               trend="neutral"
-              trendValue="Período atual"
+              trendValue="Current period"
             />
             <KpiCard
               title="CPM"
               value={formatCurrency(cpm)}
-              description="Custo por mil impressões"
+              description="Cost per thousand impressions"
               icon={Users}
               trend="neutral"
-              trendValue="Média geral"
+              trendValue="Overall average"
             />
             <KpiCard
               title="CPC"
               value={formatCurrency(cpc)}
-              description="Custo médio por clique"
+              description="Average cost per click"
               icon={MousePointer}
               trend="neutral"
-              trendValue="Média geral"
+              trendValue="Overall average"
             />
             <KpiCard
-              title="CPA"
-              value={formatCurrency(cpa)}
-              description="Custo por aquisição médio"
+              title="Total Reach"
+              value={formatMetric(totalReach)}
+              description="Unique users reached"
               icon={BarChart}
               trend="neutral"
-              trendValue="Média geral"
+              trendValue="Overall total"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <KpiCard
-              title="Alcance Total"
+              title="Total Reach"
               value={formatMetric(totalReach)}
-              description="Usuários únicos alcançados"
+              description="Unique users reached"
               icon={Users}
               className="md:col-span-1"
             />
             <KpiCard
-              title="Impressões"
+              title="Impressions"
               value={formatMetric(totalImpressions)}
-              description="Total de vezes que os anúncios foram exibidos"
+              description="Total ad impressions"
               icon={Users}
               className="md:col-span-1"
             />
             <KpiCard
-              title="Cliques"
+              title="Clicks"
               value={formatMetric(totalClicks)}
-              description="Total de cliques em links"
+              description="Total link clicks"
               icon={MousePointer}
               className="md:col-span-1"
             />
+          </div>
+
+          {/* Results Section */}
+          <div className="mb-8">
+            <ResultsSection resultsByType={resultsByType} cpaByType={cpaByType} />
           </div>
 
           {/* Performance Chart */}

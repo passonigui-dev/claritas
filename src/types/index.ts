@@ -71,3 +71,10 @@ export interface SheetConfig {
   spreadsheet_id: string;
   sheet_range: string;
 }
+
+export interface ResultsByType {
+  [key: string]: {
+    count: number;
+    spent: number;
+  };
+}
