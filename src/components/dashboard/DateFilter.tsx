@@ -16,7 +16,6 @@ interface DateFilterProps {
 }
 
 export function DateFilter({ onDateChange }: DateFilterProps) {
-  // Update the state type to match DateRange from react-day-picker
   const [date, setDate] = useState<DateRange>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
@@ -54,7 +53,6 @@ export function DateFilter({ onDateChange }: DateFilterProps) {
         if (onDateChange) onDateChange(from, lastDay);
         return;
       case "custom":
-        // Do nothing, wait for custom selection
         return;
     }
     

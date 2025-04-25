@@ -1,17 +1,29 @@
-
 import { Campaign, ResultsByType } from "@/types";
 
-export const calculateMetrics = (campaigns: Campaign[]) => {
+export const calculateMetrics = (campaigns: Campaign[], dateFrom?: Date, dateTo?: Date) => {
+  // Filter campaigns by date range if provided
+  const filteredCampaigns = campaigns.filter(campaign => {
+    if (!dateFrom || !dateTo || !campaign.startDate) return true;
+    const campaignDate = new Date(campaign.startDate);
+    return campaignDate >= dateFrom && campaignDate <= dateTo;
+  });
+
+  // Debug logs for date filtering
+  console.log('Date filter:', { dateFrom, dateTo });
+  console.log('Total campaigns before filter:', campaigns.length);
+  console.log('Total campaigns after filter:', filteredCampaigns.length);
+  
   // For debugging - log the incoming spent values
-  console.log('Raw spent values for calculation:', campaigns.map(c => ({
+  console.log('Raw spent values for calculation:', filteredCampaigns.map(c => ({
     name: c.name,
     spent: c.spent,
-    type: typeof c.spent
+    type: typeof c.spent,
+    date: c.startDate
   })));
 
   // Calculate total spent using cents to avoid floating point issues
   let totalCents = 0;
-  campaigns.forEach((campaign, index) => {
+  filteredCampaigns.forEach((campaign, index) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
     const spentCents = Math.round(spent * 100);
     totalCents += spentCents;
@@ -29,23 +41,23 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
     }))
   );
 
-  const totalImpressions = campaigns.reduce((sum, campaign) => {
+  const totalImpressions = filteredCampaigns.reduce((sum, campaign) => {
     const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;
     return sum + impressions;
   }, 0);
   
-  const totalClicks = campaigns.reduce((sum, campaign) => {
+  const totalClicks = filteredCampaigns.reduce((sum, campaign) => {
     const clicks = typeof campaign.clicks === 'number' ? campaign.clicks : 0;
     return sum + clicks;
   }, 0);
   
-  const totalReach = campaigns.reduce((sum, campaign) => {
+  const totalReach = filteredCampaigns.reduce((sum, campaign) => {
     const reach = typeof campaign.reach === 'number' ? campaign.reach : 0;
     return sum + reach;
   }, 0);
 
   // Group results by type
-  const resultsByType = campaigns.reduce((acc: ResultsByType, campaign) => {
+  const resultsByType = filteredCampaigns.reduce((acc: ResultsByType, campaign) => {
     const resultType = campaign.tipo_resultado || 'Outros';
     if (!acc[resultType]) {
       acc[resultType] = {

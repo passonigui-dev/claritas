@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
@@ -24,8 +23,11 @@ import { useGoogleSheets } from "@/hooks/useGoogleSheets";
 export default function Dashboard() {
   const { campaigns: googleSheetsCampaigns, isLoading, useMockData } = useGoogleSheets();
   const [localCampaigns, setLocalCampaigns] = useState<Campaign[]>([]);
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
   
-  // Load campaigns from localStorage
   useEffect(() => {
     const storedData = localStorage.getItem('campaignData');
     if (storedData) {
@@ -39,7 +41,6 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Use Google Sheets data if available, otherwise use localStorage data, and fallback to empty array as last resort
   const campaigns = googleSheetsCampaigns && googleSheetsCampaigns.length > 0 
     ? googleSheetsCampaigns 
     : localCampaigns.length > 0 
@@ -53,7 +54,6 @@ export default function Dashboard() {
     totalCampaigns: campaigns.length
   });
 
-  // Calculate metrics based on actual campaign data
   const {
     totalSpent,
     totalImpressions,
@@ -63,12 +63,14 @@ export default function Dashboard() {
     cpc,
     resultsByType,
     cpaByType
-  } = calculateMetrics(campaigns);
+  } = calculateMetrics(campaigns, dateRange.from, dateRange.to);
 
-  console.log('Calculated metrics:', {
+  console.log('Current date range:', dateRange);
+  console.log('Calculated metrics with date range:', {
     totalSpent,
     campaignsLength: campaigns.length,
-    spentValues: campaigns.slice(0, 10).map(c => c.spent) // Log just first 10 for brevity
+    dateFrom: dateRange.from,
+    dateTo: dateRange.to
   });
 
   return (
@@ -93,8 +95,8 @@ export default function Dashboard() {
             </div>
           </div>
           
-          {/* Date Filter */}
-          <DateFilter />
+          {/* Date Filter with handler */}
+          <DateFilter onDateChange={(from, to) => setDateRange({ from, to })} />
 
           {/* Overall Metrics Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -152,7 +154,11 @@ export default function Dashboard() {
           <ResultTypeMetrics 
             resultsByType={resultsByType} 
             cpaByType={cpaByType} 
-            campaigns={campaigns}
+            campaigns={campaigns.filter(campaign => {
+              if (!dateRange.from || !dateRange.to || !campaign.startDate) return true;
+              const campaignDate = new Date(campaign.startDate);
+              return campaignDate >= dateRange.from && campaignDate <= dateRange.to;
+            })}
           />
 
           {/* Performance Chart - Now full width */}
