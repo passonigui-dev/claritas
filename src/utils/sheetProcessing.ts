@@ -28,29 +28,66 @@ const formatNumber = (value: any): string => {
 
 // Enhanced normalization function for BRL currency values
 const normalizeNumber = (value: any): number => {
+  // Debug the input value and type
+  console.log(`Normalizing input: "${value}" (type: ${typeof value})`);
+  
+  // Handle numbers directly
   if (typeof value === 'number') return value;
+  
+  // Handle string values (most common case)
   if (typeof value === 'string') {
-    // Handle empty strings
-    if (value.trim() === '') return 0;
-    
-    // First, clean the string from any non-numeric characters except comma and dot
-    let cleaned = value.replace(/[^0-9,.-]/g, '');
-    
-    // Check if we have a BR formatted number with decimal comma
-    if (cleaned.includes(',') && !cleaned.includes('.')) {
-      cleaned = cleaned.replace(',', '.');
-    } 
-    // Handle cases where both dots and commas are present (like 1.234,56)
-    else if (cleaned.includes(',') && cleaned.includes('.')) {
-      cleaned = cleaned.replace(/\./g, '').replace(',', '.'); // Remove dots and replace comma with dot
+    // Handle empty strings or whitespace-only strings
+    if (!value.trim()) {
+      console.log(`  Empty string detected, returning 0`);
+      return 0;
     }
     
-    // Debug the currency normalization
-    console.log(`Normalizing value: "${value}" -> "${cleaned}" -> ${parseFloat(cleaned)}`);
+    // Store original value for debugging
+    const originalValue = value;
     
+    // First, clean the string from any non-numeric characters except comma and dot
+    // Remove R$, spaces, and other non-numeric characters
+    let cleaned = value.replace(/[R$\s]/g, '').trim();
+    cleaned = cleaned.replace(/[^0-9,.-]/g, '');
+    
+    // Handle PT-BR currency format cases
+    
+    // Case 1: Only comma as decimal separator (e.g., "1234,56")
+    if (cleaned.includes(',') && !cleaned.includes('.')) {
+      cleaned = cleaned.replace(',', '.');
+      console.log(`  Case 1 - Only comma: "${originalValue}" -> "${cleaned}"`);
+    } 
+    // Case 2: Both dots and comma (e.g., "1.234,56" -> "1234.56")
+    else if (cleaned.includes(',') && cleaned.includes('.')) {
+      cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+      console.log(`  Case 2 - Dots and comma: "${originalValue}" -> "${cleaned}"`);
+    }
+    // Case 3: Only dots, could be thousands or decimal (context dependent)
+    else if (!cleaned.includes(',') && cleaned.includes('.')) {
+      // In Brazil, decimal separator is comma, so when only dots are present, 
+      // we need to determine if it's a decimal or thousands separator
+      // Most likely in this case it's a decimal point already
+      console.log(`  Case 3 - Only dots: "${originalValue}" -> "${cleaned}"`);
+    }
+    
+    // Use parseFloat for the actual conversion
     const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : parsed;
+    
+    // Ensure we have a valid number, otherwise return 0
+    if (isNaN(parsed)) {
+      console.log(`  Parsing failed for "${originalValue}", returning 0`);
+      return 0;
+    }
+    
+    // Round to 2 decimal places to avoid floating point issues
+    const rounded = Math.round(parsed * 100) / 100;
+    console.log(`  Normalized: "${originalValue}" -> "${cleaned}" -> ${parsed} -> ${rounded}`);
+    
+    return rounded;
   }
+  
+  // Handle any other types (null, undefined, objects, etc)
+  console.log(`  Unsupported type: ${typeof value}, returning 0`);
   return 0;
 };
 
@@ -111,18 +148,31 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
   console.log("Raw spent values:", rawData.map(r => r.valor_usado_brl));
   
   // Calculate total spent for debugging - parsing directly from the original value
-  const totalRawSpent = rows.slice(dataStartIndex).reduce((sum, row) => {
+  let totalCentsRawSpent = 0;
+  const rowBreakdown: { raw: any, normalized: number, cents: number }[] = [];
+  
+  rows.slice(dataStartIndex).forEach((row, idx) => {
     const spentIndex = headers.indexOf('valor_usado_brl');
     if (spentIndex >= 0 && spentIndex < row.length) {
       const rawValue = row[spentIndex];
       const normalizedValue = normalizeNumber(rawValue);
-      console.log(`Raw value: "${rawValue}", Normalized: ${normalizedValue}`);
-      return sum + normalizedValue;
+      
+      // Convert to cents to avoid floating point issues when summing
+      const cents = Math.round(normalizedValue * 100);
+      totalCentsRawSpent += cents;
+      
+      // Store for detailed breakdown
+      rowBreakdown.push({ raw: rawValue, normalized: normalizedValue, cents });
+      
+      console.log(`Row ${idx+dataStartIndex}: Raw value: "${rawValue}", Normalized: ${normalizedValue}, Cents: ${cents}`);
+    } else {
+      console.log(`Row ${idx+dataStartIndex}: No valor_usado_brl found at index ${spentIndex}`);
     }
-    return sum;
-  }, 0);
+  });
   
-  console.log("Total raw spent calculated directly from sheet:", totalRawSpent.toFixed(2));
+  const totalRawSpentFromCents = totalCentsRawSpent / 100;
+  console.log("Total raw spent calculated directly from sheet (in cents):", totalCentsRawSpent, "= R$", totalRawSpentFromCents.toFixed(2));
+  console.log("Detailed breakdown of all rows:", rowBreakdown);
 
   // Transform raw data into Campaign objects for the dashboard
   const campaigns = rawData
@@ -132,10 +182,12 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
       const platformType = (row.plataforma || '').toLowerCase().includes("google") ? "google" : "meta";
       const status = (row.status || '').toLowerCase().includes("ativ") ? "active" : "paused";
 
-      // Get the raw value from the spreadsheet and normalize it correctly
-      // Make sure we're getting the original value, not the formatted one
-      const spentValue = normalizeNumber(row.valor_usado_brl);
-      console.log(`Campaign ${row.nome_campanha} - Raw spent: ${row.valor_usado_brl}, Parsed: ${spentValue}`);
+      // Raw value directly from spreadsheet for debugging
+      const originalValue = rows[index + dataStartIndex][headers.indexOf('valor_usado_brl')];
+      
+      // Parse directly from original value to ensure accuracy
+      const spentValue = normalizeNumber(originalValue);
+      console.log(`Campaign ${row.nome_campanha} - Raw spent: "${originalValue}", Parsed: ${spentValue}`);
 
       return {
         id: campaignId,
@@ -160,9 +212,18 @@ export const processSheetData = (rows: any[]): { campaigns: Campaign[], rawData:
       };
     });
 
-  // Log total spent to help debug
-  const totalSpent = campaigns.reduce((sum, c) => sum + c.spent, 0);
-  console.log(`Total spent across all campaigns: ${totalSpent.toFixed(2)}`);
+  // Calculate total spent using cents to avoid floating point issues
+  let totalCents = 0;
+  campaigns.forEach(c => {
+    const campaignCents = Math.round(c.spent * 100);
+    totalCents += campaignCents;
+    console.log(`Campaign ${c.name}: ${c.spent} (${campaignCents} cents)`);
+  });
+  const totalSpent = totalCents / 100;
+  
+  console.log(`Total spent across all campaigns (in cents): ${totalCents} = R$ ${totalSpent.toFixed(2)}`);
+  console.log(`Expected total: R$ 16.006,05`);
+  console.log(`Difference: R$ ${(16006.05 - totalSpent).toFixed(2)}`);
   console.log(`Number of campaigns with spent: ${campaigns.filter(c => c.spent > 0).length}`);
   console.log(`Campaign spent values: ${campaigns.filter(c => c.spent > 0).map(c => c.spent).join(', ')}`);
 

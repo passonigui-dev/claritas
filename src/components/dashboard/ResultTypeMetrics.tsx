@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,14 +22,16 @@ export function ResultTypeMetrics({ resultsByType, cpaByType, campaigns }: Resul
     campaign => selectedType === "All" || campaign.tipo_resultado === selectedType
   );
 
-  // Calculate metrics for filtered campaigns - handling nulls and non-numeric values
-  const totalSpent = filteredCampaigns.reduce((sum, campaign) => {
+  // Calculate metrics for filtered campaigns - with precision handling
+  let totalCents = 0;
+  filteredCampaigns.forEach(campaign => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
-    return sum + spent;
-  }, 0);
+    totalCents += Math.round(spent * 100);
+  });
+  const totalSpent = totalCents / 100;
   
   // Debug the total spent for the selected type
-  console.log(`ResultTypeMetrics - Total spent for ${selectedType}:`, totalSpent.toFixed(2));
+  console.log(`ResultTypeMetrics - Total spent for ${selectedType} (in cents): ${totalCents} = ${totalSpent.toFixed(2)}`);
   
   const totalImpressions = filteredCampaigns.reduce((sum, campaign) => {
     const impressions = typeof campaign.impressions === 'number' ? campaign.impressions : 0;

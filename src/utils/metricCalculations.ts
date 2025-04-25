@@ -9,16 +9,18 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
     type: typeof c.spent
   })));
 
-  // Calculate total spent - ensure we handle null, empty, or non-numeric values as zero
-  let totalDebug = 0;
-  const totalSpent = campaigns.reduce((sum, campaign) => {
+  // Calculate total spent using cents to avoid floating point issues
+  let totalCents = 0;
+  campaigns.forEach((campaign, index) => {
     const spent = typeof campaign.spent === 'number' ? campaign.spent : 0;
-    totalDebug += spent;
-    console.log(`Campaign: ${campaign.name}, Spent: ${spent}, Running total: ${totalDebug.toFixed(2)}`);
-    return sum + spent;
-  }, 0);
+    const spentCents = Math.round(spent * 100);
+    totalCents += spentCents;
+    console.log(`Campaign ${index}: ${campaign.name}, Spent: ${spent} (${spentCents} cents), Running total: ${totalCents / 100}`);
+  });
   
-  console.log('Total spent calculated:', totalSpent.toFixed(2));
+  const totalSpent = totalCents / 100;
+  
+  console.log('Total spent calculated (in cents):', totalCents, '=', totalSpent.toFixed(2));
   console.log('Number of campaigns:', campaigns.length);
   console.log('Campaigns with non-zero spend:', 
     campaigns.filter(c => c.spent > 0).map(c => ({
@@ -52,7 +54,11 @@ export const calculateMetrics = (campaigns: Campaign[]) => {
       };
     }
     acc[resultType].count += (typeof campaign.conversions === 'number' ? campaign.conversions : 0);
-    acc[resultType].spent += (typeof campaign.spent === 'number' ? campaign.spent : 0);
+    
+    // Use cents for precise addition
+    const spentCents = Math.round((typeof campaign.spent === 'number' ? campaign.spent : 0) * 100);
+    acc[resultType].spent += spentCents / 100;
+    
     return acc;
   }, {});
 
