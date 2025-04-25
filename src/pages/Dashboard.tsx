@@ -3,15 +3,17 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
-import { CampaignList } from "@/components/dashboard/CampaignList";
 import { ActionPlan } from "@/components/dashboard/ActionPlan";
-import { AnalysisSummary } from "@/components/dashboard/AnalysisSummary";
-import { ResultsSection } from "@/components/dashboard/ResultsSection";
-import { GoogleSheetsConnect } from "@/components/dashboard/GoogleSheetsConnect";
+import { DataTrustHeader } from "@/components/dashboard/DataTrustHeader";
+import { MetricsCard } from "@/components/dashboard/MetricsCard";
+import { ResultTypeMetrics } from "@/components/dashboard/ResultTypeMetrics";
+import { AnalysisSummaryV2 } from "@/components/dashboard/AnalysisSummaryV2";
+import { CampaignListV2 } from "@/components/dashboard/CampaignListV2";
+import { DateFilter } from "@/components/dashboard/DateFilter";
 import { 
   DollarSign, 
   MousePointer,
-  BarChart,
+  BarChart3,
   Users
 } from "lucide-react";
 import { mockChartData, mockStrengths, mockWeaknesses, mockActions, mockCampaigns } from "@/data/mockData";
@@ -66,110 +68,105 @@ export default function Dashboard() {
       <Navbar />
       <main className="py-8">
         <div className="container">
-          <div className="flex flex-col md:flex-row justify-between items-start mb-8">
+          {/* Data Trust Header */}
+          <DataTrustHeader />
+          
+          {/* Dashboard Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start mb-6">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
               <p className="text-muted-foreground">
-                Análise de {campaigns.length} campanhas • 
+                Analysis of {campaigns.length} campaigns • 
                 {isLoading ? 
-                  " Atualizando dados..." : 
-                  ` Última atualização: ${new Date().toLocaleDateString('pt-BR')}`
+                  " Updating data..." : 
+                  ` Last update: ${new Date().toLocaleDateString('pt-BR')}`
                 }
               </p>
             </div>
-            
-            <div className="mt-4 md:mt-0 w-full md:w-auto">
-              <GoogleSheetsConnect />
-            </div>
           </div>
+          
+          {/* Date Filter */}
+          <DateFilter />
 
-          {/* KPIs Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <KpiCard
-              title="Total Investido"
+          {/* Overall Metrics Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <MetricsCard
+              title="Total Invested"
               value={formatCurrency(totalSpent)}
-              description="Total investment across all campaigns"
               icon={DollarSign}
-              trend="neutral"
-              trendValue="Current period"
+              change={{ value: formatCurrency(1200), percentage: "+15%", isPositive: true }}
             />
-            <KpiCard
+            <MetricsCard
               title="CPM"
               value={formatCurrency(cpm)}
-              description="Cost per thousand impressions"
               icon={Users}
-              trend="neutral"
-              trendValue="Overall average"
+              change={{ value: formatCurrency(0.5), percentage: "-5%", isPositive: false }}
             />
-            <KpiCard
+            <MetricsCard
               title="CPC"
               value={formatCurrency(cpc)}
-              description="Average cost per click"
               icon={MousePointer}
-              trend="neutral"
-              trendValue="Overall average"
+              change={{ value: formatCurrency(0.1), percentage: "+2%", isPositive: true }}
             />
-            <KpiCard
-              title="Total Reach"
-              value={formatMetric(totalReach)}
-              description="Unique users reached"
-              icon={BarChart}
-              trend="neutral"
-              trendValue="Overall total"
+            <MetricsCard
+              title="CPA"
+              value={formatCurrency(Object.values(cpaByType).reduce((sum, val) => sum + val, 0) / Object.values(cpaByType).length || 0)}
+              icon={BarChart3}
+              change={{ value: formatCurrency(1.5), percentage: "-8%", isPositive: true }}
             />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <KpiCard
-              title="Total Reach"
+            <MetricsCard
+              title="Reach"
               value={formatMetric(totalReach)}
-              description="Unique users reached"
               icon={Users}
-              className="md:col-span-1"
+              change={{ value: formatMetric(5000), percentage: "+20%", isPositive: true }}
             />
-            <KpiCard
+            <MetricsCard
               title="Impressions"
               value={formatMetric(totalImpressions)}
-              description="Total ad impressions"
               icon={Users}
-              className="md:col-span-1"
+              change={{ value: formatMetric(7500), percentage: "+12%", isPositive: true }}
             />
-            <KpiCard
+            <MetricsCard
               title="Clicks"
               value={formatMetric(totalClicks)}
-              description="Total link clicks"
               icon={MousePointer}
-              className="md:col-span-1"
+              change={{ value: formatMetric(250), percentage: "+5%", isPositive: true }}
+            />
+            <MetricsCard
+              title="Results"
+              value={formatMetric(Object.values(resultsByType).reduce((sum, data) => sum + data.count, 0))}
+              icon={BarChart3}
+              change={{ value: formatMetric(45), percentage: "+18%", isPositive: true }}
             />
           </div>
 
-          {/* Results Section */}
-          <div className="mb-8">
-            <ResultsSection resultsByType={resultsByType} cpaByType={cpaByType} />
-          </div>
+          {/* Metrics by Result Type Section */}
+          <ResultTypeMetrics 
+            resultsByType={resultsByType} 
+            cpaByType={cpaByType} 
+            campaigns={campaigns}
+          />
 
-          {/* Performance Chart */}
+          {/* Performance Chart & Action Plan */}
           <div className="grid gap-8 md:grid-cols-3 mb-8">
             <PerformanceChart 
               data={mockChartData}
               className="col-span-full md:col-span-2"
             />
-
-            {/* Campaign List */}
             <div className="col-span-full md:col-span-1">
               <ActionPlan actions={mockActions} />
             </div>
           </div>
 
           {/* Analysis Summary */}
-          <AnalysisSummary 
+          <AnalysisSummaryV2 
             strengths={mockStrengths} 
             weaknesses={mockWeaknesses} 
           />
 
           {/* Campaign List */}
           <div className="mt-8">
-            <CampaignList campaigns={campaigns} />
+            <CampaignListV2 campaigns={campaigns} />
           </div>
         </div>
       </main>
